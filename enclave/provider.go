@@ -85,7 +85,7 @@ func (p *provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderReq
 		organisation = config.Organisation.Value
 	}
 
-	c := enclave.CreateClient(&token)
+	c := enclave.New(token)
 	orgs, err := c.GetOrgs()
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -96,17 +96,17 @@ func (p *provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderReq
 	}
 
 	var currentOrg enclaveData.AccountOrganisation
-	if &organisation == nil {
-		currentOrg = *orgs[0]
+	if organisation == "" {
+		currentOrg = orgs[0]
 	} else {
 		for _, o := range orgs {
-			if o.OrgName == &organisation {
-				currentOrg = *o
+			if o.OrgName == organisation {
+				currentOrg = o
 			}
 		}
 	}
 
-	if &currentOrg == nil {
+	if currentOrg == (enclaveData.AccountOrganisation{}) {
 		resp.Diagnostics.AddError(
 			"Could not find org",
 			"Please ensure you have specified the correct org and you have access to it",
@@ -114,7 +114,7 @@ func (p *provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderReq
 		return
 	}
 
-	p.client = c.CreateOrganisationClient(&currentOrg)
+	p.client = c.CreateOrganisationClient(currentOrg)
 	p.configured = true
 }
 

@@ -14,6 +14,7 @@ import (
 )
 
 // Can probably use a data source for ACLs however need to understand that more https://www.terraform.io/plugin/framework/data-sources
+// https://learn.hashicorp.com/tutorials/terraform/plugin-framework-create?in=terraform/providers
 
 type enrolmentKeyResourceType struct{}
 
@@ -58,7 +59,9 @@ func (e enrolmentKey) Create(ctx context.Context, req tfsdk.CreateResourceReques
 	if !e.provider.configured {
 		resp.Diagnostics.AddError(
 			"Provider not configured",
-			"The provider hasn't been configured before apply, likely because it depends on an unknown value from another resource. This leads to weird stuff happening, so we'd prefer if you didn't do that. Thanks!",
+			"The provider hasn't been configured before apply, "+
+				"likely because it depends on an unknown value from another resource. "+
+				"This leads to weird stuff happening, so we'd prefer if you didn't do that. Thanks!",
 		)
 		return
 	}
@@ -90,9 +93,9 @@ func (e enrolmentKey) Create(ctx context.Context, req tfsdk.CreateResourceReques
 	}
 
 	// create request
-	enrolmentKeyResponse, err := e.provider.client.EnrolmentKey.Create(&enclaveData.EnrolmentKeyCreate{
-		Type:         &enrolmentKeyType,
-		ApprovalMode: &approvalModeType,
+	enrolmentKeyResponse, err := e.provider.client.EnrolmentKey.Create(enclaveData.EnrolmentKeyCreate{
+		Type:         enrolmentKeyType,
+		ApprovalMode: approvalModeType,
 		Description:  enrolmentKeyAttributes.Description,
 		Tags:         enrolmentKeyAttributes.Tags,
 	})
@@ -104,6 +107,12 @@ func (e enrolmentKey) Create(ctx context.Context, req tfsdk.CreateResourceReques
 		return
 	}
 
+	enrolmentKeyState := getAttributeForState(enrolmentKeyResponse)
+	diags = resp.State.Set(ctx, enrolmentKeyState)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 }
 
 // Read resource information
@@ -125,24 +134,38 @@ func (e enrolmentKey) ImportState(ctx context.Context, req tfsdk.ImportResourceS
 }
 
 // Get EnrolmentKeyType from string
-func getType(typeString *string) (enclaveData.EnrolmentKeyType, error) {
-	switch strings.ToLower(*typeString) {
+func getType(typeString string) (enclaveData.EnrolmentKeyType, error) {
+	switch strings.ToLower(typeString) {
 	case "general":
 		return enclaveData.GeneralPurpose, nil
 	case "ephemeral":
 		return enclaveData.Ephemeral, nil
 	}
 
-	return 0, fmt.Errorf("error when converting %s to EnrolmentKeyType", *typeString)
+	return "", fmt.Errorf("error when converting %s to EnrolmentKeyType", typeString)
 }
 
 //Get EnrolmentKeyApprovalMode from string
-func getApprovalMode(approvalModeString *string) (enclaveData.EnrolmentKeyApprovalMode, error) {
-	switch strings.ToLower(*approvalModeString) {
+func getApprovalMode(approvalModeString string) (enclaveData.EnrolmentKeyApprovalMode, error) {
+	switch strings.ToLower(approvalModeString) {
 	case "automatic":
 		return enclaveData.Automatic, nil
 	case "manual":
 		return enclaveData.Manual, nil
 	}
-	return 0, fmt.Errorf("error when converting %s to EnrolmentKeyApprovalMode", *approvalModeString)
+	return "", fmt.Errorf("error when converting %s to EnrolmentKeyApprovalMode", approvalModeString)
+}
+
+func getAttributeForState(enrolmentKey enclaveData.EnrolmentKey) EnrolmentKeyAttributes {
+	var tags []string
+	for _, x := range enrolmentKey.Tags {
+		tags = append(tags, x.Tag)
+	}
+
+	return EnrolmentKeyAttributes{
+		Type:         (string)(enrolmentKey.Type),
+		ApprovalMode: (string)(enrolmentKey.ApprovalMode),
+		Description:  enrolmentKey.Description,
+		Tags:         tags,
+	}
 }
