@@ -67,7 +67,7 @@ func (e enrolmentKey) Create(ctx context.Context, req tfsdk.CreateResourceReques
 	}
 
 	// Retrieve values from enrolmentKeyAttributes
-	var enrolmentKeyAttributes EnrolmentKeyAttributes
+	var enrolmentKeyAttributes EnrolmentKeyState
 	diags := req.Plan.Get(ctx, &enrolmentKeyAttributes)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -107,7 +107,7 @@ func (e enrolmentKey) Create(ctx context.Context, req tfsdk.CreateResourceReques
 		return
 	}
 
-	enrolmentKeyState := getAttributeForState(enrolmentKeyResponse)
+	enrolmentKeyState := getStateFromResponse(enrolmentKeyResponse)
 	diags = resp.State.Set(ctx, enrolmentKeyState)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -117,14 +117,92 @@ func (e enrolmentKey) Create(ctx context.Context, req tfsdk.CreateResourceReques
 
 // Read resource information
 func (e enrolmentKey) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp *tfsdk.ReadResourceResponse) {
+	var state EnrolmentKeyState
+	diags := req.State.Get(ctx, &state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	enrolmentKeyId := state.Id
+
+	currentEnrolmentKey, err := e.provider.client.EnrolmentKey.Get(enrolmentKeyId)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error reading enrolment Key",
+			"Could not read Id "+enrolmentKeyId+": "+err.Error(),
+		)
+		return
+	}
+
+	enrolmentKeyState := getStateFromResponse(currentEnrolmentKey)
+	diags = resp.State.Set(ctx, enrolmentKeyState)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 }
 
 // Update resource
 func (e enrolmentKey) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, resp *tfsdk.UpdateResourceResponse) {
+	// read state
+	var state EnrolmentKeyState
+	diags := req.State.Get(ctx, &state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	enrolmentKeyId := state.Id
+
+	// call api to update
+	updateEnrolmentKey, err := e.provider.client.EnrolmentKey.Update(enrolmentKeyId, enclaveData.EnrolmentKeyPatch{
+		Description:  state.Description,
+		ApprovalMode: state.ApprovalMode,
+		Tags:         state.Tags,
+	})
+
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error updating enrolment Key",
+			"Could not read Id "+enrolmentKeyId+": "+err.Error(),
+		)
+		return
+	}
+
+	// update state
+	enrolmentKeyState := getStateFromResponse(updateEnrolmentKey)
+	diags = resp.State.Set(ctx, enrolmentKeyState)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 }
 
 // Delete resource
 func (e enrolmentKey) Delete(ctx context.Context, req tfsdk.DeleteResourceRequest, resp *tfsdk.DeleteResourceResponse) {
+	// read state
+	var state EnrolmentKeyState
+	diags := req.State.Get(ctx, &state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	enrolmentKeyId := state.Id
+
+	//call api to delete
+	_, err := e.provider.client.EnrolmentKey.Disable(enrolmentKeyId)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error deleting enrolment Key",
+			"Could not read Id "+enrolmentKeyId+": "+err.Error(),
+		)
+		return
+	}
+
+	// remove resource
+	resp.State.RemoveResource(ctx)
 }
 
 // Import resource
@@ -156,13 +234,14 @@ func getApprovalMode(approvalModeString string) (enclaveData.EnrolmentKeyApprova
 	return "", fmt.Errorf("error when converting %s to EnrolmentKeyApprovalMode", approvalModeString)
 }
 
-func getAttributeForState(enrolmentKey enclaveData.EnrolmentKey) EnrolmentKeyAttributes {
+func getStateFromResponse(enrolmentKey enclaveData.EnrolmentKey) EnrolmentKeyState {
 	var tags []string
 	for _, x := range enrolmentKey.Tags {
 		tags = append(tags, x.Tag)
 	}
 
-	return EnrolmentKeyAttributes{
+	return EnrolmentKeyState{
+		Id:           enrolmentKey.Id,
 		Type:         (string)(enrolmentKey.Type),
 		ApprovalMode: (string)(enrolmentKey.ApprovalMode),
 		Description:  enrolmentKey.Description,
