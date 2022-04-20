@@ -15,6 +15,7 @@ import (
 
 // Can probably use a data source for ACLs however need to understand that more https://www.terraform.io/plugin/framework/data-sources
 // https://learn.hashicorp.com/tutorials/terraform/plugin-framework-create?in=terraform/providers
+//https://www.terraform.io/plugin/framework/resources
 
 type enrolmentKeyResourceType struct{}
 
@@ -155,10 +156,19 @@ func (e enrolmentKey) Update(ctx context.Context, req tfsdk.UpdateResourceReques
 
 	enrolmentKeyId := state.Id
 
+	approvalModeType, err := getApprovalMode(state.ApprovalMode)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error converting string to enum for approvalModeType",
+			err.Error(),
+		)
+		return
+	}
+
 	// call api to update
 	updateEnrolmentKey, err := e.provider.client.EnrolmentKey.Update(enrolmentKeyId, enclaveData.EnrolmentKeyPatch{
 		Description:  state.Description,
-		ApprovalMode: state.ApprovalMode,
+		ApprovalMode: approvalModeType,
 		Tags:         state.Tags,
 	})
 
