@@ -30,6 +30,10 @@ func (p *provider) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics)
 				Type:     types.StringType,
 				Optional: true,
 			},
+			"url": {
+				Type:     types.StringType,
+				Optional: true,
+			},
 		},
 	}, nil
 }
@@ -37,6 +41,7 @@ func (p *provider) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics)
 type providerData struct {
 	Token        types.String `tfsdk:"token"`
 	Organisation types.String `tfsdk:"organisation"`
+	Url          types.String `tfsdk:"url"`
 }
 
 func (p *provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderRequest, resp *tfsdk.ConfigureProviderResponse) {
@@ -85,7 +90,13 @@ func (p *provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderReq
 		organisation = config.Organisation.Value
 	}
 
-	c := enclave.New(token)
+	var c *enclave.Client
+	if !config.Url.Null {
+		c, _ = enclave.CreateClientWithUrl(token, config.Url.Value)
+	} else {
+		c = enclave.New(token)
+	}
+
 	orgs, err := c.GetOrgs()
 	if err != nil {
 		resp.Diagnostics.AddError(

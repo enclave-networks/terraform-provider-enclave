@@ -22,11 +22,15 @@ type enrolmentKeyResourceType struct{}
 func (e enrolmentKeyResourceType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
 		Attributes: map[string]tfsdk.Attribute{
+			"id": {
+				Type:     types.Int64Type,
+				Computed: true,
+			},
 			"type": {
 				Type:     types.StringType,
 				Required: true,
 			},
-			"approvalMode": {
+			"approval_mode": {
 				Type:     types.StringType,
 				Optional: true,
 			},
@@ -67,15 +71,17 @@ func (e enrolmentKey) Create(ctx context.Context, req tfsdk.CreateResourceReques
 		return
 	}
 
-	// Retrieve values from enrolmentKeyAttributes
-	var enrolmentKeyAttributes EnrolmentKeyState
-	diags := req.Plan.Get(ctx, &enrolmentKeyAttributes)
+	// Retrieve values from state
+	var state EnrolmentKeyState
+	resp.Diagnostics.AddWarning("request looks like:", fmt.Sprint(req.Plan.Raw))
+
+	diags := req.Plan.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	enrolmentKeyType, err := getType(enrolmentKeyAttributes.Type)
+	enrolmentKeyType, err := getType(state.Type.Value)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error converting string to enum for enrolmentKeyType",
@@ -84,7 +90,7 @@ func (e enrolmentKey) Create(ctx context.Context, req tfsdk.CreateResourceReques
 		return
 	}
 
-	approvalModeType, err := getApprovalMode(enrolmentKeyAttributes.ApprovalMode)
+	approvalModeType, err := getApprovalMode(state.ApprovalMode.Value)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error converting string to enum for approvalModeType",
@@ -93,13 +99,17 @@ func (e enrolmentKey) Create(ctx context.Context, req tfsdk.CreateResourceReques
 		return
 	}
 
-	// create request
-	enrolmentKeyResponse, err := e.provider.client.EnrolmentKey.Create(enclaveData.EnrolmentKeyCreate{
+	enrolmentKeyCreate := enclaveData.EnrolmentKeyCreate{
 		Type:         enrolmentKeyType,
 		ApprovalMode: approvalModeType,
-		Description:  enrolmentKeyAttributes.Description,
-		Tags:         enrolmentKeyAttributes.Tags,
-	})
+		Description:  state.Description.Value,
+		Tags:         state.Tags,
+	}
+
+	resp.Diagnostics.AddWarning("enrolmentKeyCreate looks like:", fmt.Sprint(enrolmentKeyCreate))
+
+	// create request
+	enrolmentKeyResponse, err := e.provider.client.EnrolmentKey.Create(enrolmentKeyCreate)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error creating EnrolmentKey in enclave",
@@ -108,8 +118,12 @@ func (e enrolmentKey) Create(ctx context.Context, req tfsdk.CreateResourceReques
 		return
 	}
 
-	enrolmentKeyState := getStateFromResponse(enrolmentKeyResponse)
-	diags = resp.State.Set(ctx, enrolmentKeyState)
+	resp.Diagnostics.AddWarning("enrolmentKeyResponse looks like:", fmt.Sprint(enrolmentKeyResponse))
+
+	updateState(enrolmentKeyResponse, &state)
+	resp.Diagnostics.AddWarning("enrolmentKeyState looks like:", fmt.Sprint(state))
+
+	diags = resp.State.Set(ctx, state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -127,17 +141,17 @@ func (e enrolmentKey) Read(ctx context.Context, req tfsdk.ReadResourceRequest, r
 
 	enrolmentKeyId := state.Id
 
-	currentEnrolmentKey, err := e.provider.client.EnrolmentKey.Get(enrolmentKeyId)
+	currentEnrolmentKey, err := e.provider.client.EnrolmentKey.Get(int(enrolmentKeyId.Value))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error reading enrolment Key",
-			"Could not read Id "+enrolmentKeyId+": "+err.Error(),
+			"Could not read Id "+fmt.Sprint(enrolmentKeyId.Value)+": "+err.Error(),
 		)
 		return
 	}
 
-	enrolmentKeyState := getStateFromResponse(currentEnrolmentKey)
-	diags = resp.State.Set(ctx, enrolmentKeyState)
+	updateState(currentEnrolmentKey, &state)
+	diags = resp.State.Set(ctx, state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -156,7 +170,7 @@ func (e enrolmentKey) Update(ctx context.Context, req tfsdk.UpdateResourceReques
 
 	enrolmentKeyId := state.Id
 
-	approvalModeType, err := getApprovalMode(state.ApprovalMode)
+	approvalModeType, err := getApprovalMode(state.ApprovalMode.Value)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error converting string to enum for approvalModeType",
@@ -166,8 +180,8 @@ func (e enrolmentKey) Update(ctx context.Context, req tfsdk.UpdateResourceReques
 	}
 
 	// call api to update
-	updateEnrolmentKey, err := e.provider.client.EnrolmentKey.Update(enrolmentKeyId, enclaveData.EnrolmentKeyPatch{
-		Description:  state.Description,
+	updateEnrolmentKey, err := e.provider.client.EnrolmentKey.Update(int(enrolmentKeyId.Value), enclaveData.EnrolmentKeyPatch{
+		Description:  state.Description.Value,
 		ApprovalMode: approvalModeType,
 		Tags:         state.Tags,
 	})
@@ -175,14 +189,14 @@ func (e enrolmentKey) Update(ctx context.Context, req tfsdk.UpdateResourceReques
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error updating enrolment Key",
-			"Could not read Id "+enrolmentKeyId+": "+err.Error(),
+			"Could not read Id "+fmt.Sprint(enrolmentKeyId.Value)+": "+err.Error(),
 		)
 		return
 	}
 
 	// update state
-	enrolmentKeyState := getStateFromResponse(updateEnrolmentKey)
-	diags = resp.State.Set(ctx, enrolmentKeyState)
+	updateState(updateEnrolmentKey, &state)
+	diags = resp.State.Set(ctx, state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -202,11 +216,11 @@ func (e enrolmentKey) Delete(ctx context.Context, req tfsdk.DeleteResourceReques
 	enrolmentKeyId := state.Id
 
 	//call api to delete
-	_, err := e.provider.client.EnrolmentKey.Disable(enrolmentKeyId)
+	_, err := e.provider.client.EnrolmentKey.Disable(int(enrolmentKeyId.Value))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error deleting enrolment Key",
-			"Could not read Id "+enrolmentKeyId+": "+err.Error(),
+			"Could not read Id "+fmt.Sprint(enrolmentKeyId.Value)+": "+err.Error(),
 		)
 		return
 	}
@@ -244,17 +258,6 @@ func getApprovalMode(approvalModeString string) (enclaveData.EnrolmentKeyApprova
 	return "", fmt.Errorf("error when converting %s to EnrolmentKeyApprovalMode", approvalModeString)
 }
 
-func getStateFromResponse(enrolmentKey enclaveData.EnrolmentKey) EnrolmentKeyState {
-	var tags []string
-	for _, x := range enrolmentKey.Tags {
-		tags = append(tags, x.Tag)
-	}
-
-	return EnrolmentKeyState{
-		Id:           enrolmentKey.Id,
-		Type:         (string)(enrolmentKey.Type),
-		ApprovalMode: (string)(enrolmentKey.ApprovalMode),
-		Description:  enrolmentKey.Description,
-		Tags:         tags,
-	}
+func updateState(enrolmentKey enclaveData.EnrolmentKey, state *EnrolmentKeyState) {
+	state.Id = types.Int64{Value: int64(enrolmentKey.Id)}
 }

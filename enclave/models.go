@@ -1,9 +1,11 @@
 package enclave
 
+import "github.com/hashicorp/terraform-plugin-framework/types"
+
 type EnrolmentKeyState struct {
-	Id           string   `tfdsk:"id"`
-	Type         string   `tfdsk:"type"`
-	ApprovalMode string   `tfdsk:"approval_mode"`
-	Description  string   `tfdsk:"description"`
-	Tags         []string `tfdsk:"tags"`
+	Id           types.Int64  `tfsdk:"id"`
+	Type         types.String `tfsdk:"type"`
+	ApprovalMode types.String `tfsdk:"approval_mode"`
+	Description  types.String `tfsdk:"description"`
+	Tags         []string     `tfsdk:"tags"`
 }
