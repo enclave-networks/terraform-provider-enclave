@@ -13,12 +13,11 @@ provider "enclave" {
 }
 
 # Can we use id of resource to specify description
-resource "enclave_enrolment_key" "developers" {
-    type = "general"
-    approval_mode = "automatic"
-    description = "developers"
-    tags = [
-        "tag1",
-        "tag2"
-    ]
-}
+# resource "enclave_enrolment_key" "developers" {
+#     type = "general"
+#     approval_mode = "automatic"
+#     description = "developers updated"
+#     tags = [
+#         "tag1"
+#     ]
+# }

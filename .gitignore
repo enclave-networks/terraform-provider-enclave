@@ -15,4 +15,4 @@
 vendor/
 
 # terraform ignore
-*.tfstate
+*.tfstate*
