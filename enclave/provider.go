@@ -92,7 +92,7 @@ func (p *provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderReq
 
 	var c *enclave.Client
 	if !config.Url.Null {
-		c, _ = enclave.CreateClientWithUrl(token, config.Url.Value)
+		c, _ = enclave.NewWithUrl(token, config.Url.Value)
 	} else {
 		c = enclave.New(token)
 	}
@@ -133,6 +133,8 @@ func (p *provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderReq
 func (p *provider) GetResources(_ context.Context) (map[string]tfsdk.ResourceType, diag.Diagnostics) {
 	return map[string]tfsdk.ResourceType{
 		"enclave_enrolment_key": enrolmentKeyResourceType{},
+		"enclave_policy":        policyResourceType{},
+		"enclave_policy_acl":    policyAclResourceType{},
 		// Add more resource types here
 	}, nil
 }

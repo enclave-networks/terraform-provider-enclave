@@ -3,14 +3,14 @@ module github.com/enclave-networks/terraform-provider-enclave
 go 1.18
 
 require (
-	github.com/enclave-networks/go-enclaveapi v0.0.0-20220421154842-d80763d468cd
+	github.com/enclave-networks/go-enclaveapi v0.0.0-20220523093920-8ba51503e4d8
 	github.com/hashicorp/terraform-plugin-framework v0.6.1
 	github.com/hashicorp/terraform-plugin-go v0.9.0
 )
 
 require (
 	github.com/fatih/color v1.13.0 // indirect
-	github.com/golang/protobuf v1.5.2 // indirect
+	github.com/golang/protobuf v1.5.2 // indirect; indirects
 	github.com/google/go-cmp v0.5.7 // indirect
 	github.com/hashicorp/go-hclog v1.2.0 // indirect
 	github.com/hashicorp/go-plugin v1.4.3 // indirect

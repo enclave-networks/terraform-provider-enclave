@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	enclaveData "github.com/enclave-networks/go-enclaveapi/data"
+	enclaveEnrolmentKey "github.com/enclave-networks/go-enclaveapi/data/enrolmentkey"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
@@ -98,7 +98,7 @@ func (e enrolmentKey) Create(ctx context.Context, req tfsdk.CreateResourceReques
 		return
 	}
 
-	enrolmentKeyCreate := enclaveData.EnrolmentKeyCreate{
+	enrolmentKeyCreate := enclaveEnrolmentKey.EnrolmentKeyCreate{
 		Type:         enrolmentKeyType,
 		ApprovalMode: approvalModeType,
 		Description:  plan.Description.Value,
@@ -115,7 +115,7 @@ func (e enrolmentKey) Create(ctx context.Context, req tfsdk.CreateResourceReques
 		return
 	}
 
-	setStateId(enrolmentKeyResponse, &plan)
+	setEnrolmentKeyStateId(enrolmentKeyResponse, &plan)
 
 	diags = resp.State.Set(ctx, plan)
 	resp.Diagnostics.Append(diags...)
@@ -133,18 +133,18 @@ func (e enrolmentKey) Read(ctx context.Context, req tfsdk.ReadResourceRequest, r
 		return
 	}
 
-	enrolmentKeyId := state.Id
+	enrolmentKeyId := enclaveEnrolmentKey.EnrolmentKeyId(state.Id.Value)
 
-	currentEnrolmentKey, err := e.provider.client.EnrolmentKey.Get(int(enrolmentKeyId.Value))
+	currentEnrolmentKey, err := e.provider.client.EnrolmentKey.Get(enrolmentKeyId)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error reading enrolment Key",
-			"Could not read Id "+fmt.Sprint(enrolmentKeyId.Value)+": "+err.Error(),
+			"Could not read Id "+fmt.Sprint(enrolmentKeyId)+": "+err.Error(),
 		)
 		return
 	}
 
-	setStateId(currentEnrolmentKey, &state)
+	setEnrolmentKeyStateId(currentEnrolmentKey, &state)
 	diags = resp.State.Set(ctx, state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -170,7 +170,7 @@ func (e enrolmentKey) Update(ctx context.Context, req tfsdk.UpdateResourceReques
 		return
 	}
 
-	enrolmentKeyId := state.Id
+	enrolmentKeyId := enclaveEnrolmentKey.EnrolmentKeyId(state.Id.Value)
 
 	approvalModeType, err := getApprovalMode(plan.ApprovalMode.Value)
 	if err != nil {
@@ -182,7 +182,7 @@ func (e enrolmentKey) Update(ctx context.Context, req tfsdk.UpdateResourceReques
 	}
 
 	// call api to update
-	updateEnrolmentKey, err := e.provider.client.EnrolmentKey.Update(int(enrolmentKeyId.Value), enclaveData.EnrolmentKeyPatch{
+	updateEnrolmentKey, err := e.provider.client.EnrolmentKey.Update(enrolmentKeyId, enclaveEnrolmentKey.EnrolmentKeyPatch{
 		Description:  plan.Description.Value,
 		ApprovalMode: approvalModeType,
 		Tags:         plan.Tags,
@@ -191,13 +191,13 @@ func (e enrolmentKey) Update(ctx context.Context, req tfsdk.UpdateResourceReques
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error updating enrolment Key",
-			"Could not read Id "+fmt.Sprint(enrolmentKeyId.Value)+": "+err.Error(),
+			"Could not read Id "+fmt.Sprint(enrolmentKeyId)+": "+err.Error(),
 		)
 		return
 	}
 
 	// update state
-	setStateId(updateEnrolmentKey, &plan)
+	setEnrolmentKeyStateId(updateEnrolmentKey, &plan)
 	diags = resp.State.Set(ctx, plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -238,28 +238,28 @@ func (e enrolmentKey) ImportState(ctx context.Context, req tfsdk.ImportResourceS
 }
 
 // Get EnrolmentKeyType from string
-func getType(typeString string) (enclaveData.EnrolmentKeyType, error) {
+func getType(typeString string) (enclaveEnrolmentKey.EnrolmentKeyType, error) {
 	switch strings.ToLower(typeString) {
 	case "general":
-		return enclaveData.GeneralPurpose, nil
+		return enclaveEnrolmentKey.GeneralPurpose, nil
 	case "ephemeral":
-		return enclaveData.Ephemeral, nil
+		return enclaveEnrolmentKey.Ephemeral, nil
 	}
 
 	return "", fmt.Errorf("error when converting %s to EnrolmentKeyType", typeString)
 }
 
 //Get EnrolmentKeyApprovalMode from string
-func getApprovalMode(approvalModeString string) (enclaveData.EnrolmentKeyApprovalMode, error) {
+func getApprovalMode(approvalModeString string) (enclaveEnrolmentKey.EnrolmentKeyApprovalMode, error) {
 	switch strings.ToLower(approvalModeString) {
 	case "automatic":
-		return enclaveData.Automatic, nil
+		return enclaveEnrolmentKey.Automatic, nil
 	case "manual":
-		return enclaveData.Manual, nil
+		return enclaveEnrolmentKey.Manual, nil
 	}
 	return "", fmt.Errorf("error when converting %s to EnrolmentKeyApprovalMode", approvalModeString)
 }
 
-func setStateId(enrolmentKey enclaveData.EnrolmentKey, state *EnrolmentKeyState) {
+func setEnrolmentKeyStateId(enrolmentKey enclaveEnrolmentKey.EnrolmentKey, state *EnrolmentKeyState) {
 	state.Id = types.Int64{Value: int64(enrolmentKey.Id)}
 }
