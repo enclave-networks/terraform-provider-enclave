@@ -3,7 +3,7 @@ module github.com/enclave-networks/terraform-provider-enclave
 go 1.18
 
 require (
-	github.com/enclave-networks/go-enclaveapi v0.0.0-20220523093920-8ba51503e4d8
+	github.com/enclave-networks/go-enclaveapi v0.0.0-20220524103001-6bb41e9b10e0
 	github.com/hashicorp/terraform-plugin-framework v0.6.1
 	github.com/hashicorp/terraform-plugin-go v0.9.0
 )

@@ -13,7 +13,7 @@ type EnrolmentKeyState struct {
 type PolicyState struct {
 	Id           types.Int64  `tfsdk:"id"`
 	Description  types.String `tfsdk:"description"`
-	Notes        types.String `tfsdk:"Notes"`
+	Notes        types.String `tfsdk:"notes"`
 	IsEnabled    types.Bool   `tfsdk:"is_enabled"`
 	SenderTags   []string     `tfsdk:"sender_tags"`
 	RecieverTags []string     `tfsdk:"reciever_tags"`

@@ -2,6 +2,7 @@ package enclave
 
 import (
 	"context"
+	"fmt"
 
 	enclavePolicy "github.com/enclave-networks/go-enclaveapi/data/policy"
 
@@ -26,11 +27,11 @@ func (p policyResourceType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Dia
 			},
 			"notes": {
 				Type:     types.StringType,
-				Required: false,
+				Optional: true,
 			},
 			"is_enabled": {
 				Type:     types.BoolType,
-				Required: false,
+				Optional: true,
 			},
 			"sender_tags": {
 				Type: types.ListType{
@@ -70,7 +71,6 @@ func (p policy) Create(ctx context.Context, req tfsdk.CreateResourceRequest, res
 	}
 
 	var plan PolicyState
-
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -91,7 +91,7 @@ func (p policy) Create(ctx context.Context, req tfsdk.CreateResourceRequest, res
 	}
 
 	// create request
-	policyResponse, err := p.provider.client.PolicyClient.Create(policyCreate)
+	policyResponse, err := p.provider.client.Policy.Create(policyCreate)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error creating EnrolmentKey in enclave",
@@ -110,13 +110,96 @@ func (p policy) Create(ctx context.Context, req tfsdk.CreateResourceRequest, res
 }
 
 func (p policy) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp *tfsdk.ReadResourceResponse) {
+	var state PolicyState
+	diags := req.State.Get(ctx, &state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
+	policyId := enclavePolicy.PolicyId(state.Id.Value)
+
+	currentPolicy, err := p.provider.client.Policy.Get(policyId)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error reading policy Key",
+			"Could not read Id "+fmt.Sprint(policyId)+": "+err.Error(),
+		)
+		return
+	}
+
+	setPolicyStateId(currentPolicy, &state)
+	diags = resp.State.Set(ctx, state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 }
 
 func (p policy) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, resp *tfsdk.UpdateResourceResponse) {
+	// read state to get Id
+	var state PolicyState
+	diags := req.State.Get(ctx, &state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Get executing plan updates
+	var plan PolicyState
+	diags = req.Plan.Get(ctx, &plan)
+	resp.Diagnostics.Append(diags...)
+
+	policyId := enclavePolicy.PolicyId(state.Id.Value)
+
+	updateEnrolmentKey, err := p.provider.client.Policy.Update(policyId, enclavePolicy.PolicyPatch{
+		Description:  plan.Description.Value,
+		IsEnabled:    plan.IsEnabled.Value,
+		SenderTags:   plan.SenderTags,
+		RecieverTags: plan.RecieverTags,
+		Notes:        plan.Notes.Value,
+	})
+
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error updating Policy",
+			"Could not read Id "+fmt.Sprint(policyId)+": "+err.Error(),
+		)
+		return
+	}
+
+	// update state
+	setPolicyStateId(updateEnrolmentKey, &plan)
+	diags = resp.State.Set(ctx, plan)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 }
 
 func (p policy) Delete(ctx context.Context, req tfsdk.DeleteResourceRequest, resp *tfsdk.DeleteResourceResponse) {
+	// read state
+	var state PolicyState
+	diags := req.State.Get(ctx, &state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	policyId := enclavePolicy.PolicyId(state.Id.Value)
+
+	//call api to delete
+	_, err := p.provider.client.Policy.Delete(policyId)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error deleting Policy",
+			"Could not read Id "+fmt.Sprint(policyId)+": "+err.Error(),
+		)
+		return
+	}
+
+	// remove resource
+	resp.State.RemoveResource(ctx)
 }
 
 // Import resource

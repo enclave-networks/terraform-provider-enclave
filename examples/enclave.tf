@@ -12,7 +12,11 @@ provider "enclave" {
     url = "http://localhost:8081/"
 }
 
-# Can we use id of resource to specify description
+# resource "enclave_policy" "testpolicy" {
+#   description = "this is a test"
+# }
+
+# Can we use id of resource to specify description*
 # resource "enclave_enrolment_key" "developers" {
 #     type = "general"
 #     approval_mode = "automatic"

@@ -134,7 +134,7 @@ func (p *provider) GetResources(_ context.Context) (map[string]tfsdk.ResourceTyp
 	return map[string]tfsdk.ResourceType{
 		"enclave_enrolment_key": enrolmentKeyResourceType{},
 		"enclave_policy":        policyResourceType{},
-		"enclave_policy_acl":    policyAclResourceType{},
+		// "enclave_policy_acl":    policyAclResourceType{},
 		// Add more resource types here
 	}, nil
 }
