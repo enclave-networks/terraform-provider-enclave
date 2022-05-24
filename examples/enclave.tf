@@ -12,16 +12,38 @@ provider "enclave" {
     url = "http://localhost:8081/"
 }
 
-# resource "enclave_policy" "testpolicy" {
-#   description = "this is a test"
-# }
+resource "enclave_policy_acl" "any" {
+  protocol = "any"
+}
 
-# Can we use id of resource to specify description*
-# resource "enclave_enrolment_key" "developers" {
-#     type = "general"
-#     approval_mode = "automatic"
-#     description = "developers updated"
-#     tags = [
-#         "tag1"
-#     ]
-# }
+resource "enclave_policy_acl" "http" {
+  protocol = "tcp"
+  ports = "80"
+}
+
+resource "enclave_policy" "testpolicy" {
+  description = "this is a test"
+  acl = [
+    enclave_policy_acl.any,
+    enclave_policy_acl.http
+  ]
+}
+
+resource "enclave_dns_zone" "zone1" {
+  name = "internal"
+}
+
+resource "enclave_dns_record" "record1"{
+  name = "terraform-test"
+  zone_id = enclave_dns_zone.zone1.id
+
+}
+
+resource "enclave_dns_zone" "zone2" {
+  name = "external"
+}
+
+resource "enclave_dns_record" "record2"{
+  name = "terraform-3"
+  zone_id = enclave_dns_zone.zone2.id
+}

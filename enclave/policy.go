@@ -3,8 +3,10 @@ package enclave
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	enclavePolicy "github.com/enclave-networks/go-enclaveapi/data/policy"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
@@ -45,6 +47,18 @@ func (p policyResourceType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Dia
 				},
 				Optional: true,
 			},
+			"acl": {
+				Type: types.ListType{
+					ElemType: types.ObjectType{
+						AttrTypes: map[string]attr.Type{
+							"protocol":    types.StringType,
+							"ports":       types.StringType,
+							"description": types.StringType,
+						},
+					},
+				},
+				Optional: true,
+			},
 		},
 	}, nil
 }
@@ -82,19 +96,25 @@ func (p policy) Create(ctx context.Context, req tfsdk.CreateResourceRequest, res
 		isEnabled = true
 	}
 
+	policyAcl, err := toPolicyAcl(plan.Acl)
+	if err != nil {
+		resp.Diagnostics.AddError("Error converting ACL", err.Error())
+	}
+
 	policyCreate := enclavePolicy.PolicyCreate{
 		Description:  plan.Description.Value,
 		IsEnabled:    isEnabled,
 		Notes:        plan.Notes.Value,
 		SenderTags:   plan.SenderTags,
 		RecieverTags: plan.RecieverTags,
+		Acls:         policyAcl,
 	}
 
 	// create request
 	policyResponse, err := p.provider.client.Policy.Create(policyCreate)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Error creating EnrolmentKey in enclave",
+			"Error creating Policy in enclave",
 			err.Error(),
 		)
 		return
@@ -150,14 +170,20 @@ func (p policy) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, res
 	diags = req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 
+	policyAcl, err := toPolicyAcl(plan.Acl)
+	if err != nil {
+		resp.Diagnostics.AddError("Error converting ACL", err.Error())
+	}
+
 	policyId := enclavePolicy.PolicyId(state.Id.Value)
 
-	updateEnrolmentKey, err := p.provider.client.Policy.Update(policyId, enclavePolicy.PolicyPatch{
+	updatePolicy, err := p.provider.client.Policy.Update(policyId, enclavePolicy.PolicyPatch{
 		Description:  plan.Description.Value,
 		IsEnabled:    plan.IsEnabled.Value,
 		SenderTags:   plan.SenderTags,
 		RecieverTags: plan.RecieverTags,
 		Notes:        plan.Notes.Value,
+		Acls:         policyAcl,
 	})
 
 	if err != nil {
@@ -169,7 +195,7 @@ func (p policy) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, res
 	}
 
 	// update state
-	setPolicyStateId(updateEnrolmentKey, &plan)
+	setPolicyStateId(updatePolicy, &plan)
 	diags = resp.State.Set(ctx, plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -210,4 +236,40 @@ func (p policy) ImportState(ctx context.Context, req tfsdk.ImportResourceStateRe
 
 func setPolicyStateId(policy enclavePolicy.Policy, state *PolicyState) {
 	state.Id = types.Int64{Value: int64(policy.Id)}
+}
+
+func toPolicyAcl(pacl []PolicyAclState) ([]enclavePolicy.PolicyAcl, error) {
+
+	result := make([]enclavePolicy.PolicyAcl, len(pacl))
+
+	for i, acl := range pacl {
+		protcol, err := isValidProtocol(acl.Protocol.Value)
+
+		if err != nil {
+			return nil, err
+		}
+
+		result[i] = enclavePolicy.PolicyAcl{
+			Ports:       acl.Ports.Value,
+			Protocol:    protcol,
+			Description: acl.Description.Value,
+		}
+	}
+
+	return result, nil
+}
+
+func isValidProtocol(protocol string) (enclavePolicy.PolicyAclProtocol, error) {
+	switch strings.ToLower(protocol) {
+	case "any":
+		return enclavePolicy.Any, nil
+	case "tcp":
+		return enclavePolicy.Tcp, nil
+	case "udp":
+		return enclavePolicy.Udp, nil
+	case "icmp":
+		return enclavePolicy.Icmp, nil
+	}
+
+	return -1, fmt.Errorf("invalid protcol specified must be one of: any, tcp, udp, icmp")
 }
