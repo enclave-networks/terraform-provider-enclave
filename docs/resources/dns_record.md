@@ -19,7 +19,10 @@ resource "enclave_dns_zone" "zone1" {
 resource "enclave_dns_record" "record1"{
   name = "terraform-test"
   zone_id = enclave_dns_zone.zone1.id
-
+  tags = [
+      "tag1",
+      "tag2-dns"
+  ]
 }
 ```
 
