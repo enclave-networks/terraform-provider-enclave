@@ -19,7 +19,7 @@ resource "enclave_policy" "testpolicy" {
   sender_tags = [
     "dev",
     "tester"
-  ],
+  ]
   receiver_tags = [
     "server"
   ]
