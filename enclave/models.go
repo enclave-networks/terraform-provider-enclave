@@ -17,7 +17,7 @@ type PolicyState struct {
 	Notes        types.String     `tfsdk:"notes"`
 	IsEnabled    types.Bool       `tfsdk:"is_enabled"`
 	SenderTags   []string         `tfsdk:"sender_tags"`
-	RecieverTags []string         `tfsdk:"reciever_tags"`
+	ReceiverTags []string         `tfsdk:"receiver_tags"`
 	Acl          []PolicyAclState `tfsdk:"acl"`
 }
 

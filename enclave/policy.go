@@ -106,7 +106,7 @@ func (p policy) Create(ctx context.Context, req tfsdk.CreateResourceRequest, res
 		IsEnabled:    isEnabled,
 		Notes:        plan.Notes.Value,
 		SenderTags:   plan.SenderTags,
-		RecieverTags: plan.RecieverTags,
+		RecieverTags: plan.ReceiverTags,
 		Acls:         policyAcl,
 	}
 
@@ -181,7 +181,7 @@ func (p policy) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, res
 		Description:  plan.Description.Value,
 		IsEnabled:    plan.IsEnabled.Value,
 		SenderTags:   plan.SenderTags,
-		RecieverTags: plan.RecieverTags,
+		RecieverTags: plan.ReceiverTags,
 		Notes:        plan.Notes.Value,
 		Acls:         policyAcl,
 	})

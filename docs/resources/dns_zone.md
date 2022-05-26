@@ -18,5 +18,5 @@ resource "enclave_dns_zone" "zone1" {
 ```
 
 # Schema
-- *`name` - The name without spaces of the DNS Zone. This will them become the Suffix e:g `zone-name` becomes `.zone-name`.
-- `notes` - Some notes on what this DNS Zone is used for.
+- `name` - (Required) The name without spaces of the DNS Zone. This will them become the Suffix e:g `zone-name` becomes `.zone-name`.
+- `notes` - (Optional) Some notes on what this DNS Zone is used for.

@@ -38,6 +38,6 @@ resource "enclave_policy" "testpolicy2" {
 ```
 
 # Schema
- - *`protocol` - The Protocol type can be one of the following `any`, `tcp`, `udp`, `icmp`
- - `ports`- A port range or a single port e:g `8000-8080` or `8080`
- - `description` - A description of this ACL
+ - `protocol` - (Required) The Protocol type can be one of the following `any`, `tcp`, `udp`, `icmp`.
+ - `ports`- (Optional) A port range or a single port e:g `8000-8080` or `8080`.
+ - `description` - (Optional) A description of this ACL.

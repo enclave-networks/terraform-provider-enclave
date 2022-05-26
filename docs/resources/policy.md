@@ -27,8 +27,9 @@ resource "enclave_policy" "testpolicy" {
 ```
 
 # Schema
-  - *`description` - A brief description of the policy e:g `Development Access`
-  - `notes` - Some notes about the policy.
-  - `is_enabled` - Is the policy enabled this defaults to `true`
-  - `sender_tags` - A list of sender tags to apply to this policy
-  - `receiver_tags` - A list of receiver tags to apply to this policy
+  - `description` - (Required) A brief description of the policy e:g `Development Access`.
+  - `notes` - (Optional) Some notes about the policy.
+  - `is_enabled` - (Optional) Is the policy enabled this defaults to `true`.
+  - `sender_tags` - (Optional) A list of sender tags to apply to this policy.
+  - `receiver_tags` - (Optional) A list of receiver tags to apply to this policy.
+  - `acl` - (Optional) More info can be found in the `policy_acl` section of these docs.
