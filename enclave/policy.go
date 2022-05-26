@@ -41,7 +41,7 @@ func (p policyResourceType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Dia
 				},
 				Optional: true,
 			},
-			"reciever_tags": {
+			"receiver_tags": {
 				Type: types.ListType{
 					ElemType: types.StringType,
 				},

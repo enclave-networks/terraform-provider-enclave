@@ -26,9 +26,13 @@ func (e enrolmentKeyResourceType) GetSchema(_ context.Context) (tfsdk.Schema, di
 				Type:     types.Int64Type,
 				Computed: true,
 			},
+			"key": {
+				Type:     types.StringType,
+				Computed: true,
+			},
 			"type": {
 				Type:     types.StringType,
-				Required: true,
+				Optional: true,
 			},
 			"approval_mode": {
 				Type:     types.StringType,
@@ -80,22 +84,38 @@ func (e enrolmentKey) Create(ctx context.Context, req tfsdk.CreateResourceReques
 		return
 	}
 
-	enrolmentKeyType, err := getType(plan.Type.Value)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error converting string to enum for enrolmentKeyType",
-			err.Error(),
-		)
-		return
+	var enrolmentKeyType enclaveEnrolmentKey.EnrolmentKeyType
+	if !plan.Type.Null {
+		val, err := getType(plan.Type.Value)
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Error converting string to enum for enrolmentKeyType",
+				err.Error(),
+			)
+			return
+		}
+
+		enrolmentKeyType = val
+	} else {
+		val := enclaveEnrolmentKey.GeneralPurpose
+		enrolmentKeyType = val
 	}
 
-	approvalModeType, err := getApprovalMode(plan.ApprovalMode.Value)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error converting string to enum for approvalModeType",
-			err.Error(),
-		)
-		return
+	var approvalModeType enclaveEnrolmentKey.EnrolmentKeyApprovalMode
+	if !plan.ApprovalMode.Null {
+		val, err := getApprovalMode(plan.ApprovalMode.Value)
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Error converting string to enum for approvalModeType",
+				err.Error(),
+			)
+			return
+		}
+
+		approvalModeType = val
+	} else {
+		val := enclaveEnrolmentKey.Manual
+		approvalModeType = val
 	}
 
 	enrolmentKeyCreate := enclaveEnrolmentKey.EnrolmentKeyCreate{
@@ -115,7 +135,7 @@ func (e enrolmentKey) Create(ctx context.Context, req tfsdk.CreateResourceReques
 		return
 	}
 
-	setEnrolmentKeyStateId(enrolmentKeyResponse, &plan)
+	setEnrolmentKeyStateValues(enrolmentKeyResponse, &plan)
 
 	diags = resp.State.Set(ctx, plan)
 	resp.Diagnostics.Append(diags...)
@@ -144,7 +164,8 @@ func (e enrolmentKey) Read(ctx context.Context, req tfsdk.ReadResourceRequest, r
 		return
 	}
 
-	setEnrolmentKeyStateId(currentEnrolmentKey, &state)
+	setEnrolmentKeyStateValues(currentEnrolmentKey, &state)
+
 	diags = resp.State.Set(ctx, state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -172,13 +193,21 @@ func (e enrolmentKey) Update(ctx context.Context, req tfsdk.UpdateResourceReques
 
 	enrolmentKeyId := enclaveEnrolmentKey.EnrolmentKeyId(state.Id.Value)
 
-	approvalModeType, err := getApprovalMode(plan.ApprovalMode.Value)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error converting string to enum for approvalModeType",
-			err.Error(),
-		)
-		return
+	var approvalModeType enclaveEnrolmentKey.EnrolmentKeyApprovalMode
+	if !plan.ApprovalMode.Null {
+		val, err := getApprovalMode(plan.ApprovalMode.Value)
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Error converting string to enum for approvalModeType",
+				err.Error(),
+			)
+			return
+		}
+
+		approvalModeType = val
+	} else {
+		val := enclaveEnrolmentKey.Manual
+		approvalModeType = val
 	}
 
 	// call api to update
@@ -197,7 +226,8 @@ func (e enrolmentKey) Update(ctx context.Context, req tfsdk.UpdateResourceReques
 	}
 
 	// update state
-	setEnrolmentKeyStateId(updateEnrolmentKey, &plan)
+	setEnrolmentKeyStateValues(updateEnrolmentKey, &plan)
+
 	diags = resp.State.Set(ctx, plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -260,6 +290,7 @@ func getApprovalMode(approvalModeString string) (enclaveEnrolmentKey.EnrolmentKe
 	return "", fmt.Errorf("error when converting %s to EnrolmentKeyApprovalMode", approvalModeString)
 }
 
-func setEnrolmentKeyStateId(enrolmentKey enclaveEnrolmentKey.EnrolmentKey, state *EnrolmentKeyState) {
+func setEnrolmentKeyStateValues(enrolmentKey enclaveEnrolmentKey.EnrolmentKey, state *EnrolmentKeyState) {
 	state.Id = types.Int64{Value: int64(enrolmentKey.Id)}
+	state.Key = types.String{Value: enrolmentKey.Key}
 }

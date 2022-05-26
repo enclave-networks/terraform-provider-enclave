@@ -1,0 +1,31 @@
+---
+page_title: "dns_zone Resource - Enclave"
+subcategory: ""
+description: |-
+A DNS Record defines a route for DNS Name Resolution to both systems or tags
+---
+
+# Resource `enclave_dns_record`
+A DNS Record can be created and attached to both a system or a tag it's recommended to attach it to a tag as it's far less brittle. More information can be found on the [enclave docs](https://docs.enclave.io/management/dns/#adding-a-dns-record)
+
+A Record also needs to be attached to a Zone. If no `zone_id` is specified it'll be attached to the default `enclave` zone
+
+# Example
+```terraform
+resource "enclave_dns_zone" "zone1" {
+  name = "internal"
+}
+
+resource "enclave_dns_record" "record1"{
+  name = "terraform-test"
+  zone_id = enclave_dns_zone.zone1.id
+
+}
+```
+
+# Schema
+- `zone_id` - A DNS Zone ID which can be retrieved from the resource
+- *`name` - The DNS Record name which also forms the `FQDN`
+- `tags` - The list of Tags that this Record will apply to
+- `systems` - A list of system IDs this Record will apply to
+- `notes` - Notes about this DNS Record

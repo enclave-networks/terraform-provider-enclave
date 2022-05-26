@@ -8,8 +8,7 @@ terraform {
 
 # Token can this be provided on apply rather than here? Digital oceon does this
 provider "enclave" {
-    token = "p9rcFksNsHALkfyqyfgRzYq4AXwcuxr22CN9Mc5PG42umHPUiPhnzX7kiRfdWM3"
-    url = "http://localhost:8081/"
+    token = "my-token"
 }
 
 resource "enclave_policy_acl" "any" {

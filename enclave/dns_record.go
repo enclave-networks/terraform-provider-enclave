@@ -23,7 +23,7 @@ func (d dnsRecordResourceType) GetSchema(_ context.Context) (tfsdk.Schema, diag.
 			},
 			"zone_id": {
 				Type:     types.Int64Type,
-				Required: true,
+				Optional: true,
 			},
 			"name": {
 				Type:     types.StringType,
@@ -79,9 +79,16 @@ func (d dnsRecord) Create(ctx context.Context, req tfsdk.CreateResourceRequest, 
 		return
 	}
 
+	var zoneId enclaveDns.DnsZoneId
+	if !plan.ZoneId.Null {
+		zoneId = enclaveDns.DnsZoneId(plan.ZoneId.Value)
+	} else {
+		zoneId = enclaveDns.DnsZoneId(1)
+	}
+
 	dnsRecordCreate := enclaveDns.DnsRecordCreate{
 		Name:    plan.Name.Value,
-		ZoneId:  enclaveDns.DnsZoneId(plan.ZoneId.Value),
+		ZoneId:  zoneId,
 		Tags:    plan.Tags,
 		Systems: plan.Systems,
 		Notes:   plan.Notes.Value,

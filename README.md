@@ -20,3 +20,6 @@ provider_installation {
   direct {}
 }
 ```
+
+# Releasing to Terraform Registry
+https://www.terraform.io/registry/providers/publishing
