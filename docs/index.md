@@ -9,7 +9,7 @@ A Terraform Provider for working with the Enclave API.
 
 This provider gives access to the main configuration aspects of Enclave. Use the navigation to the left to read about the available resources.
 
-# Examples
+## Examples
 
 Create your API Token [here](https://portal.enclave.io/account).
 
