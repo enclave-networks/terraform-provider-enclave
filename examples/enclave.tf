@@ -45,6 +45,8 @@ resource "enclave_enrolment_key" "db_enrolment" {
   ]
 }
 
+# This is a sensitive value; it's only being output here as an example please be wary with sharing this key
 output "enrolment_key" {
   value = enclave_enrolment_key.db_enrolment.key
+  sensitive = true
 }

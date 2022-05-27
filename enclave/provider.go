@@ -106,13 +106,22 @@ func (p *provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderReq
 		return
 	}
 
+	if len(orgs) > 1 && organisationId == "" {
+		resp.Diagnostics.AddError(
+			"Error more than one Enclave Organisation is available with this token",
+			"Please set the \"organisation_id\" provider field",
+		)
+		return
+	}
+
 	var currentOrg enclaveData.AccountOrganisation
-	if organisationId == "" {
+	if len(orgs) == 1 {
 		currentOrg = orgs[0]
 	} else {
 		for _, org := range orgs {
 			if string(org.OrgId) == organisationId {
 				currentOrg = org
+				break
 			}
 		}
 	}
