@@ -31,7 +31,11 @@ resource "enclave_dns_record" "record1"{
 ## Schema
 
 - `zone_id` - (Optional) A DNS Zone ID which can be retrieved from the resource.
+
 - `name` - (Required) The DNS Record name which also forms the `FQDN`.
+
 - `tags` - (Optional) The list of Tags that this Record will apply to.
+
 - `systems` - (Optional) A list of system IDs this Record will apply to.
+
 - `notes` - (Optional) Notes about this DNS Record.
