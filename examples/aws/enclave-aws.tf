@@ -79,11 +79,3 @@ resource "aws_instance" "rocky_server_1" {
     Name = "TerraformTestInstance1"
   }
 }
-
-output "enrolment_key" {
-  value = enclave_enrolment_key.aws.key
-}
-
-output "script" {
-  value = data.template_file.install_enclave_rpm.rendered
-}
