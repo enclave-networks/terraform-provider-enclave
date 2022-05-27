@@ -1,17 +1,20 @@
 ---
-page_title: "policy Resource - Enclave"
+page_title: "enclave_policy resource - Enclave"
 subcategory: ""
 description: |-
-A Policy is what defines the rules on which systems can talk to each other.
+A policy defines which systems can talk to each other, and what traffic can flow between them.
 ---
 
 # Resource `enclave_policy`
 
-The Policy resource is used to create a policy enclave this defines how systems communicate with attributes such as sender/receiver tags and ACLs.
+The policy resource is used to create an enclave policy; this defines how systems communicate, with attributes such as sender/receiver tags and ACLs.
 
-# Example
+## Example
 
 ```terraform
+# This policy allows all systems tagged with "dev" or "tester" 
+# to access all systems tagged with "server", but not the other 
+# way round.
 resource "enclave_policy" "testpolicy" {
   description = "this is a test"
   notes = "i'll use this to show how it works"
@@ -26,10 +29,16 @@ resource "enclave_policy" "testpolicy" {
 }
 ```
 
-# Schema
-  - `description` - (Required) A brief description of the policy e:g `Development Access`.
-  - `notes` - (Optional) Some notes about the policy.
-  - `is_enabled` - (Optional) Is the policy enabled this defaults to `true`.
-  - `sender_tags` - (Optional) A list of sender tags to apply to this policy.
-  - `receiver_tags` - (Optional) A list of receiver tags to apply to this policy.
-  - `acl` - (Optional) More info can be found in the `policy_acl` section of these docs.
+## Schema
+
+- `description` - (Required) A brief description of the policy e:g `Development Access`.
+
+- `is_enabled` - (Optional) Is the policy enabled? This defaults to `true`.
+
+- `sender_tags` - (Optional) A list of sender tags to apply to this policy. All systems with this tag will be able to send to the receivers.
+
+- `receiver_tags` - (Optional) A list of receiver tags to apply to this policy. All systems with this tag will be able to receive traffic from the senders.
+
+- `acl` - (Optional) More info can be found in the `policy_acl` section of these docs. If no ACLs are specified, no traffic will flow across the policy.
+
+- `notes` - (Optional) Some notes about the policy.
