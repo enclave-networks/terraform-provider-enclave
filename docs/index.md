@@ -46,9 +46,6 @@ terraform apply
 More examples can be found in our [github repo](https://github.com/enclave-networks/terraform-provider-enclave)
 
 # Schema
-## Required
-- `token` - string - Your API token from [here](https://portal.enclave.io/account)
-
-## Optional
-- `organisation_id` - string - The ID of your organisation which can be found in the [settings page](https://portal.enclave.io/my/settings), but can also be found in the portal URL (e.g. `https://portal.enclave.io/org/<orgId>/systems`). Organisation IDs are not secret, and can freely be shared. Only users with access to that organisation will be able to invoke APIs against it.
-- `url` - string - The Base API Url leave this blank to use the default of `https://api.enclave.io`
+- `token` - (Required) Your API token from [here](https://portal.enclave.io/account)
+- `organisation_id` - (Optional unless you have more than one Org associated to your `token`) The ID of your organisation which can be found in the [settings page](https://portal.enclave.io/my/settings), but can also be found in the portal URL (e.g. `https://portal.enclave.io/org/<orgId>/systems`). Organisation IDs are not secret, and can freely be shared. Only users with access to that organisation will be able to invoke APIs against it.
+- `url` - (Optional) The Base API Url leave this blank to use the default of `https://api.enclave.io`

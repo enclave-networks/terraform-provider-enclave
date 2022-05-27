@@ -108,7 +108,7 @@ func (p *provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderReq
 
 	if len(orgs) > 1 && organisationId == "" {
 		resp.Diagnostics.AddError(
-			"Error more than one Organisation Detected",
+			"Error more than one Enclave Organisation is available with this token",
 			"Please set the \"organisation_id\" field",
 		)
 		return
