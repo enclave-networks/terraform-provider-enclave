@@ -43,6 +43,8 @@ export TF_VAR_enclave_token=my-token
 terraform apply
 ```
 
+More examples can be found in our [github repo](https://github.com/enclave-networks/terraform-provider-enclave)
+
 # Schema
 ## Required
 - `token` - string - Your API token from [here](https://portal.enclave.io/account)
