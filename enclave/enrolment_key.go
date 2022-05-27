@@ -27,8 +27,9 @@ func (e enrolmentKeyResourceType) GetSchema(_ context.Context) (tfsdk.Schema, di
 				Computed: true,
 			},
 			"key": {
-				Type:     types.StringType,
-				Computed: true,
+				Type:      types.StringType,
+				Computed:  true,
+				Sensitive: true,
 			},
 			"type": {
 				Type:     types.StringType,

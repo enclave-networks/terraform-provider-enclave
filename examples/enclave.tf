@@ -38,6 +38,8 @@ resource "enclave_enrolment_key" "enrolment" {
   ]
 }
 
+# This is a sensative value it's only being output here as an example please be wary with sharing this key
 output "enrolment_key" {
   value = enclave_enrolment_key.enrolment.key
+  sensitive = true
 }
