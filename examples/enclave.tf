@@ -1,3 +1,5 @@
+# Super simple example which create a policy along with an enrolment key. It also outputs it so you can see it working!
+
 terraform {
   required_providers {
     enclave = {
@@ -6,13 +8,13 @@ terraform {
   }
 }
 variable "enclave_token" {
-    type = string
-    nullable = false
+  type     = string
+  nullable = false
 }
 
 provider "enclave" {
-    token = var.enclave_token
-    organisation = "Thomas's Org"
+  token           = var.enclave_token
+  organisation_id = "<OrgId>"
 }
 
 resource "enclave_policy_acl" "any" {
@@ -20,14 +22,16 @@ resource "enclave_policy_acl" "any" {
 }
 
 resource "enclave_policy" "testpolicy" {
-  description = "this is a test"
+  description   = "this is a test"
+  sender_tags   = ["developer"]
+  receiver_tags = ["database"]
   acl = [
     enclave_policy_acl.any,
   ]
 }
 
 resource "enclave_enrolment_key" "enrolment" {
-  description = "Enrolment"
+  description   = "Enrolment"
   approval_mode = "automatic"
   tags = [
     "example"

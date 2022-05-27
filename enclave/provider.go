@@ -26,7 +26,7 @@ func (p *provider) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics)
 				Type:     types.StringType,
 				Required: true,
 			},
-			"organisation": {
+			"organisation_id": {
 				Type:     types.StringType,
 				Optional: true,
 			},
@@ -39,9 +39,9 @@ func (p *provider) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics)
 }
 
 type providerData struct {
-	Token        types.String `tfsdk:"token"`
-	Organisation types.String `tfsdk:"organisation"`
-	Url          types.String `tfsdk:"url"`
+	Token          types.String `tfsdk:"token"`
+	OrganisationId types.String `tfsdk:"organisation_id"`
+	Url            types.String `tfsdk:"url"`
 }
 
 func (p *provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderRequest, resp *tfsdk.ConfigureProviderResponse) {
@@ -76,8 +76,8 @@ func (p *provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderReq
 		return
 	}
 
-	var organisation string
-	if config.Organisation.Unknown {
+	var organisationId string
+	if config.OrganisationId.Unknown {
 		// Cannot connect to client with an unknown value
 		resp.Diagnostics.AddWarning(
 			"Unable to create client",
@@ -87,7 +87,7 @@ func (p *provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderReq
 	}
 
 	if !config.Token.Null {
-		organisation = config.Organisation.Value
+		organisationId = config.OrganisationId.Value
 	}
 
 	var c *enclave.Client
@@ -107,12 +107,12 @@ func (p *provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderReq
 	}
 
 	var currentOrg enclaveData.AccountOrganisation
-	if organisation == "" {
+	if organisationId == "" {
 		currentOrg = orgs[0]
 	} else {
-		for _, o := range orgs {
-			if o.OrgName == organisation {
-				currentOrg = o
+		for _, org := range orgs {
+			if string(org.OrgId) == organisationId {
+				currentOrg = org
 			}
 		}
 	}

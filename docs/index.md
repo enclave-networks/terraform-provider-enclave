@@ -48,5 +48,5 @@ terraform apply
 - `token` - string - Your API token from [here](https://portal.enclave.io/account)
 
 ## Optional
+- `organisation_id` - string - The ID of your organisation which can be found in the [settings page](https://portal.enclave.io/my/settings), but can also be found in the portal URL (e.g. `https://portal.enclave.io/org/<orgId>/systems`). Organisation IDs are not secret, and can freely be shared. Only users with access to that organisation will be able to invoke APIs against it.
 - `url` - string - The Base API Url leave this blank to use the default of `https://api.enclave.io`
-- `organisation` - string - The Organisation name for example `Thomas's Org` will default to the first Organisation if none specified
