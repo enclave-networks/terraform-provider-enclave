@@ -1,6 +1,11 @@
-# This example takes you through creating an EC2 instance running Rocky Linux https://rockylinux.org/
-#(A 100% bug-for-bug compatible with Red Hat Enterprise Linux) will auto configure enclave from our RPM repositroy.
+# Enclave Terraform Example - Set up Enclave on an EC2 Instance
+#
+# This example takes you through creating an EC2 instance running
+# Rocky Linux https://rockylinux.org/ (A 100% bug-for-bug compatible distro with Red Hat Enterprise Linux),
+# and will install and enrol enclave from our RPM repository.
+#
 # It also creates an enrolment key for this as well as a developer to ec2 policy
+
 terraform {
   required_providers {
     enclave = {
@@ -12,22 +17,25 @@ terraform {
     }
   }
 }
+
 provider "aws" {
   profile = "mfa"
 }
 
 variable "enclave_token" {
-  type     = string
-  nullable = false
+  type      = string
+  nullable  = false,
+  sensitive = true
 }
 
 provider "enclave" {
   token           = var.enclave_token
-  organisation_id = "<OrgId>"
+  organisation_id = "<orgId>"
 }
 
-resource "enclave_policy_acl" "any" {
-  protocol = "any"
+resource "enclave_policy_acl" "ssh" {
+  protocol = "tcp"
+  ports = "22"
 }
 
 resource "enclave_policy" "dev_to_ec2" {
@@ -35,7 +43,7 @@ resource "enclave_policy" "dev_to_ec2" {
   sender_tags   = ["developer"]
   receiver_tags = ["aws-ec2"]
   acl = [
-    enclave_policy_acl.any,
+    enclave_policy_acl.ssh,
   ]
 }
 
@@ -78,12 +86,4 @@ resource "aws_instance" "rocky_server_1" {
   tags = {
     Name = "TerraformTestInstance1"
   }
-}
-
-output "enrolment_key" {
-  value = enclave_enrolment_key.aws.key
-}
-
-output "script" {
-  value = data.template_file.install_enclave_rpm.rendered
 }

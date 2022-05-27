@@ -1,4 +1,8 @@
-# Super simple example which create a policy along with an enrolment key. It also outputs it so you can see it working!
+# Enclave Terraform Example - Developer Database access
+#
+# Super simple example which creates a policy to allow developers 
+# access to SQL databases, along with an enrolment key for the databases.
+# It also outputs the key so you can see it working!
 
 terraform {
   required_providers {
@@ -7,37 +11,40 @@ terraform {
     }
   }
 }
+
 variable "enclave_token" {
-  type     = string
-  nullable = false
+  type      = string
+  nullable  = false,
+  sensitive = true
 }
 
 provider "enclave" {
   token           = var.enclave_token
-  organisation_id = "<OrgId>"
+  organisation_id = "<orgId>"
 }
 
-resource "enclave_policy_acl" "any" {
-  protocol = "any"
+resource "enclave_policy_acl" "sql" {
+  protocol = "tcp"
+  ports = "1433"
 }
 
-resource "enclave_policy" "testpolicy" {
-  description   = "this is a test"
+resource "enclave_policy" "devs_to_db" {
+  description   = "Allow devs to access the database"
   sender_tags   = ["developer"]
   receiver_tags = ["database"]
   acl = [
-    enclave_policy_acl.any,
+    enclave_policy_acl.sql
   ]
 }
 
-resource "enclave_enrolment_key" "enrolment" {
+resource "enclave_enrolment_key" "db_enrolment" {
   description   = "Enrolment"
   approval_mode = "automatic"
   tags = [
-    "example"
+    "database"
   ]
 }
 
 output "enrolment_key" {
-  value = enclave_enrolment_key.enrolment.key
+  value = enclave_enrolment_key.db_enrolment.key
 }
