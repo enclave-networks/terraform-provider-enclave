@@ -96,6 +96,9 @@ func (p policy) Create(ctx context.Context, req tfsdk.CreateResourceRequest, res
 		isEnabled = true
 	}
 
+	// Let's check lengths and add some warnings
+	checkForPolicyWarnings(plan, &resp.Diagnostics)
+
 	policyAcl, err := toPolicyAcl(plan.Acl)
 	if err != nil {
 		resp.Diagnostics.AddError("Error converting ACL", err.Error())
@@ -170,6 +173,9 @@ func (p policy) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, res
 	diags = req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 
+	// Let's check lengths and add some warnings
+	checkForPolicyWarnings(plan, &resp.Diagnostics)
+
 	policyAcl, err := toPolicyAcl(plan.Acl)
 	if err != nil {
 		resp.Diagnostics.AddError("Error converting ACL", err.Error())
@@ -236,6 +242,27 @@ func (p policy) ImportState(ctx context.Context, req tfsdk.ImportResourceStateRe
 
 func setPolicyStateId(policy enclavePolicy.Policy, state *PolicyState) {
 	state.Id = types.Int64{Value: int64(policy.Id)}
+}
+
+func checkForPolicyWarnings(plan PolicyState, diagnostics *diag.Diagnostics) {
+	if len(plan.Acl) == 0 {
+		diagnostics.AddWarning(
+			"No ACLs defined",
+			"No network traffic is permitted by this policy until at least one acl is applied. "+
+				"Allow network traffic for this policy by adding an acl entry for the policy")
+	}
+
+	if len(plan.SenderTags) == 0 {
+		diagnostics.AddWarning(
+			"No Sender Tags defined",
+			"Please define a sender tag in order for this Policy to create connectivity")
+	}
+
+	if len(plan.ReceiverTags) == 0 {
+		diagnostics.AddWarning(
+			"No Receiver Tags defined",
+			"Please define a receiver tag in order for this Policy to create connectivity")
+	}
 }
 
 func toPolicyAcl(pacl []PolicyAclState) ([]enclavePolicy.PolicyAcl, error) {
