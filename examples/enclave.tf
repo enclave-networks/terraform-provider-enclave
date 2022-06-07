@@ -14,7 +14,7 @@ terraform {
 
 variable "enclave_token" {
   type      = string
-  nullable  = false,
+  nullable  = false
   sensitive = true
 }
 
