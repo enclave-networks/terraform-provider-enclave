@@ -1,0 +1,288 @@
+package enclave
+
+import (
+	"context"
+	"fmt"
+	"strings"
+
+	enclaveTrustRequirement "github.com/enclave-networks/go-enclaveapi/data/trustrequirement"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+)
+
+type trustRequirementResourceType struct{}
+
+func (t trustRequirementResourceType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
+	return tfsdk.Schema{
+		Attributes: map[string]tfsdk.Attribute{
+			"id": {
+				Type:     types.Int64Type,
+				Computed: true,
+			},
+			"description": {
+				Type:     types.StringType,
+				Required: true,
+			},
+			"notes": {
+				Type:     types.StringType,
+				Optional: true,
+			},
+			"user_authentication": {
+				Type: types.ObjectType{
+					AttrTypes: map[string]attr.Type{
+						"authority": types.StringType,
+						"tenant_id": types.StringType,
+						"group_id":  types.StringType,
+					},
+				},
+				Optional:  true,
+				Sensitive: true,
+			},
+			"public_ip": {
+				Type:      types.ObjectType{AttrTypes: map[string]attr.Type{}},
+				Optional:  true,
+				Sensitive: true,
+			},
+		},
+	}, nil
+}
+
+func (t trustRequirementResourceType) NewResource(_ context.Context, pr tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
+	return trustRequirement{
+		provider: *(pr.(*provider)),
+	}, nil
+}
+
+type trustRequirement struct {
+	provider provider
+}
+
+// Create implements tfsdk.Resource
+func (t trustRequirement) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
+	if !t.provider.configured {
+		resp.Diagnostics.AddError(
+			"Provider not configured",
+			"The provider hasn't been configured before apply, "+
+				"likely because it depends on an unknown value from another resource. "+
+				"This leads to weird stuff happening, so we'd prefer if you didn't do that. Thanks!",
+		)
+		return
+	}
+
+	var plan TrustRequirementState
+	diags := req.Plan.Get(ctx, &plan)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Let's check lengths and add some warnings
+	validateTrustRequirement(plan, &resp.Diagnostics)
+
+	trustRequirementType, config, conditions, err := getTrustRequirementSettings(plan)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error creating api request",
+			err.Error(),
+		)
+	}
+
+	trustRequirementCreate := enclaveTrustRequirement.TrustRequirementCreate{
+		Description: plan.Description.Value,
+		Notes:       plan.Notes.Value,
+		Type:        trustRequirementType,
+		Settings: enclaveTrustRequirement.TrustRequirementSettings{
+			Configuration: config,
+			Conditions:    conditions,
+		},
+	}
+
+	// create request
+	trustRequirementResponse, err := t.provider.client.TrustRequirements.Create(trustRequirementCreate)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error creating Trust Requirement in enclave",
+			err.Error(),
+		)
+		return
+	}
+
+	setTrustRequirementStateId(trustRequirementResponse, &plan)
+
+	diags = resp.State.Set(ctx, plan)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+}
+
+// Delete implements tfsdk.Resource
+func (t trustRequirement) Delete(ctx context.Context, req tfsdk.DeleteResourceRequest, resp *tfsdk.DeleteResourceResponse) {
+	// read state
+	var state TrustRequirementState
+	diags := req.State.Get(ctx, &state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	trustRequirementId := enclaveTrustRequirement.TrustRequirementId(state.Id.Value)
+
+	//call api to delete
+	_, err := t.provider.client.TrustRequirements.Delete(trustRequirementId)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error deleting Trust Requirement",
+			"Could not read Id "+fmt.Sprint(trustRequirementId)+": "+err.Error(),
+		)
+		return
+	}
+
+	// remove resource
+	resp.State.RemoveResource(ctx)
+}
+
+// Read implements tfsdk.Resource
+func (t trustRequirement) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp *tfsdk.ReadResourceResponse) {
+	var state TrustRequirementState
+	diags := req.State.Get(ctx, &state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	trustRequirementId := enclaveTrustRequirement.TrustRequirementId(state.Id.Value)
+
+	currentTrustRequirement, err := t.provider.client.TrustRequirements.Get(trustRequirementId)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error reading policy Key",
+			"Could not read Id "+fmt.Sprint(trustRequirementId)+": "+err.Error(),
+		)
+		return
+	}
+
+	setTrustRequirementStateId(currentTrustRequirement, &state)
+	diags = resp.State.Set(ctx, state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+}
+
+// Update implements tfsdk.Resource
+func (t trustRequirement) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, resp *tfsdk.UpdateResourceResponse) {
+	// read state to get Id
+	var state TrustRequirementState
+	diags := req.State.Get(ctx, &state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Get executing plan updates
+	var plan TrustRequirementState
+	diags = req.Plan.Get(ctx, &plan)
+	resp.Diagnostics.Append(diags...)
+
+	// Let's check lengths and add some warnings
+	validateTrustRequirement(plan, &resp.Diagnostics)
+
+	trustRequirementId := enclaveTrustRequirement.TrustRequirementId(state.Id.Value)
+
+	_, config, conditions, err := getTrustRequirementSettings(plan)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error creating api request",
+			err.Error(),
+		)
+	}
+
+	updateTrustRequirement, err := t.provider.client.TrustRequirements.Update(trustRequirementId, enclaveTrustRequirement.TrustRequirementPatch{
+		Description: plan.Description.Value,
+		Notes:       plan.Notes.Value,
+		Settings: enclaveTrustRequirement.TrustRequirementSettings{
+			Configuration: config,
+			Conditions:    conditions,
+		},
+	})
+
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error updating Trust Requirement",
+			"Could not read Id "+fmt.Sprint(trustRequirementId)+": "+err.Error(),
+		)
+		return
+	}
+
+	// update state
+	setTrustRequirementStateId(updateTrustRequirement, &plan)
+	diags = resp.State.Set(ctx, plan)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+}
+
+func setTrustRequirementStateId(trustRequirement enclaveTrustRequirement.TrustRequirement, state *TrustRequirementState) {
+	state.Id = types.Int64{Value: int64(trustRequirement.Id)}
+}
+
+func validateTrustRequirement(plan TrustRequirementState, diagnostics *diag.Diagnostics) {
+	if strings.ToLower(plan.UserAuthentication.Authority.Value) == string(Portal) && (!plan.UserAuthentication.GroupId.Null || !plan.UserAuthentication.TenantId.Null) {
+		diagnostics.AddWarning(
+			"Authetication Authority of Portal does not need any additional properties",
+			"The portal Authority type only needs the Authority value")
+	}
+
+	if plan.UserAuthentication != (UserAuthenticationState{}) && plan.PublicIp != (PublicIpState{}) {
+		diagnostics.AddError("Only one Trust Requirement Type can be set at once!", "Please remove one of the Types to continue")
+	}
+}
+
+func getTrustRequirementSettings(plan TrustRequirementState) (trustRequirementType enclaveTrustRequirement.TrustRequirementType, config map[string]string, conditions map[string]string, err error) {
+	// UserAuthentication has been set use that to create our maps
+	if plan.UserAuthentication != (UserAuthenticationState{}) {
+
+		if plan.UserAuthentication.Authority.Value == string(Portal) {
+			return enclaveTrustRequirement.UserAuthentication,
+				map[string]string{
+					"authority": plan.UserAuthentication.Authority.Value,
+				},
+				map[string]string{},
+				nil
+		}
+
+		return enclaveTrustRequirement.UserAuthentication,
+			map[string]string{
+				"authority": plan.UserAuthentication.Authority.Value,
+				"tenantId":  plan.UserAuthentication.TenantId.Value,
+			}, map[string]string{
+				"claim": "groups",
+				"value": plan.UserAuthentication.GroupId.Value,
+			},
+			nil
+	}
+
+	if plan.PublicIp != (PublicIpState{}) {
+		return enclaveTrustRequirement.PublicIp,
+			map[string]string{},
+			map[string]string{},
+			nil
+	}
+
+	// We shouldn't ever really get here but just in case we'll inform the user they've not got a value
+	return -1,
+		map[string]string{},
+		map[string]string{},
+		fmt.Errorf("could not get trust requirement settings please ensure you have a type object created refer to the docs for more information")
+}
+
+type TrustRequirementAuthorityType string
+
+const (
+	Portal TrustRequirementAuthorityType = "portal"
+	Azure  TrustRequirementAuthorityType = "azure"
+)

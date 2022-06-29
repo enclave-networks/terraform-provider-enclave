@@ -127,7 +127,7 @@ func (e enrolmentKey) Create(ctx context.Context, req tfsdk.CreateResourceReques
 	}
 
 	// create request
-	enrolmentKeyResponse, err := e.provider.client.EnrolmentKey.Create(enrolmentKeyCreate)
+	enrolmentKeyResponse, err := e.provider.client.EnrolmentKeys.Create(enrolmentKeyCreate)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error creating EnrolmentKey in enclave",
@@ -156,7 +156,7 @@ func (e enrolmentKey) Read(ctx context.Context, req tfsdk.ReadResourceRequest, r
 
 	enrolmentKeyId := enclaveEnrolmentKey.EnrolmentKeyId(state.Id.Value)
 
-	currentEnrolmentKey, err := e.provider.client.EnrolmentKey.Get(enrolmentKeyId)
+	currentEnrolmentKey, err := e.provider.client.EnrolmentKeys.Get(enrolmentKeyId)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error reading enrolment Key",
@@ -212,7 +212,7 @@ func (e enrolmentKey) Update(ctx context.Context, req tfsdk.UpdateResourceReques
 	}
 
 	// call api to update
-	updateEnrolmentKey, err := e.provider.client.EnrolmentKey.Update(enrolmentKeyId, enclaveEnrolmentKey.EnrolmentKeyPatch{
+	updateEnrolmentKey, err := e.provider.client.EnrolmentKeys.Update(enrolmentKeyId, enclaveEnrolmentKey.EnrolmentKeyPatch{
 		Description:  plan.Description.Value,
 		ApprovalMode: approvalModeType,
 		Tags:         plan.Tags,
@@ -249,7 +249,7 @@ func (e enrolmentKey) Delete(ctx context.Context, req tfsdk.DeleteResourceReques
 	enrolmentKeyId := state.Id
 
 	//call api to delete
-	_, err := e.provider.client.EnrolmentKey.Disable(int(enrolmentKeyId.Value))
+	_, err := e.provider.client.EnrolmentKeys.Disable(int(enrolmentKeyId.Value))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error deleting enrolment Key",

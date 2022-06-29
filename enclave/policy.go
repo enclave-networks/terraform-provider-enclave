@@ -114,7 +114,7 @@ func (p policy) Create(ctx context.Context, req tfsdk.CreateResourceRequest, res
 	}
 
 	// create request
-	policyResponse, err := p.provider.client.Policy.Create(policyCreate)
+	policyResponse, err := p.provider.client.Policies.Create(policyCreate)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error creating Policy in enclave",
@@ -142,7 +142,7 @@ func (p policy) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp *t
 
 	policyId := enclavePolicy.PolicyId(state.Id.Value)
 
-	currentPolicy, err := p.provider.client.Policy.Get(policyId)
+	currentPolicy, err := p.provider.client.Policies.Get(policyId)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error reading policy Key",
@@ -183,7 +183,7 @@ func (p policy) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, res
 
 	policyId := enclavePolicy.PolicyId(state.Id.Value)
 
-	updatePolicy, err := p.provider.client.Policy.Update(policyId, enclavePolicy.PolicyPatch{
+	updatePolicy, err := p.provider.client.Policies.Update(policyId, enclavePolicy.PolicyPatch{
 		Description:  plan.Description.Value,
 		IsEnabled:    plan.IsEnabled.Value,
 		SenderTags:   plan.SenderTags,
@@ -221,7 +221,7 @@ func (p policy) Delete(ctx context.Context, req tfsdk.DeleteResourceRequest, res
 	policyId := enclavePolicy.PolicyId(state.Id.Value)
 
 	//call api to delete
-	_, err := p.provider.client.Policy.Delete(policyId)
+	_, err := p.provider.client.Policies.Delete(policyId)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error deleting Policy",

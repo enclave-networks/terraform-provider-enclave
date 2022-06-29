@@ -41,3 +41,20 @@ type DnsRecordState struct {
 	Systems []string     `tfsdk:"systems"`
 	Notes   types.String `tfsdk:"notes"`
 }
+
+type TrustRequirementState struct {
+	Id                 types.Int64             `tfsdk:"id"`
+	Description        types.String            `tfsdk:"description"`
+	Notes              types.String            `tfsdk:"notes"`
+	UserAuthentication UserAuthenticationState `tfsdk:"user_authentication"`
+	PublicIp           PublicIpState           `tfsdk:"public_ip"`
+}
+
+type UserAuthenticationState struct {
+	Authority types.String `tfsdk:"authority"`
+	TenantId  types.String `tfsdk:"tenant_id"`
+	GroupId   types.String `tfsdk:"group_id"`
+}
+
+type PublicIpState struct {
+}
