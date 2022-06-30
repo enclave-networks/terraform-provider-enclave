@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	enclaveTrustRequirement "github.com/enclave-networks/go-enclaveapi/data/trustrequirement"
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -30,18 +29,20 @@ func (t trustRequirementResourceType) GetSchema(_ context.Context) (tfsdk.Schema
 				Optional: true,
 			},
 			"user_authentication": {
-				Type: types.ObjectType{
-					AttrTypes: map[string]attr.Type{
-						"authority": types.StringType,
-						"tenant_id": types.StringType,
-						"group_id":  types.StringType,
+				Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
+					"authority": {
+						Type:     types.StringType,
+						Required: true,
 					},
-				},
-				Optional:  true,
-				Sensitive: true,
-			},
-			"public_ip": {
-				Type:      types.ObjectType{AttrTypes: map[string]attr.Type{}},
+					"tenant_id": {
+						Type:     types.StringType,
+						Optional: true,
+					},
+					"group_id": {
+						Type:     types.StringType,
+						Optional: true,
+					},
+				}),
 				Optional:  true,
 				Sensitive: true,
 			},
@@ -236,20 +237,17 @@ func validateTrustRequirement(plan TrustRequirementState, diagnostics *diag.Diag
 			"Authetication Authority of Portal does not need any additional properties",
 			"The portal Authority type only needs the Authority value")
 	}
-
-	if plan.UserAuthentication != (UserAuthenticationState{}) && plan.PublicIp != (PublicIpState{}) {
-		diagnostics.AddError("Only one Trust Requirement Type can be set at once!", "Please remove one of the Types to continue")
-	}
 }
 
 func getTrustRequirementSettings(plan TrustRequirementState) (trustRequirementType enclaveTrustRequirement.TrustRequirementType, config map[string]string, conditions map[string]string, err error) {
 	// UserAuthentication has been set use that to create our maps
 	if plan.UserAuthentication != (UserAuthenticationState{}) {
+		authorityLower := strings.ToLower(plan.UserAuthentication.Authority.Value)
 
-		if plan.UserAuthentication.Authority.Value == string(Portal) {
+		if authorityLower == string(Portal) {
 			return enclaveTrustRequirement.UserAuthentication,
 				map[string]string{
-					"authority": plan.UserAuthentication.Authority.Value,
+					"authority": authorityLower,
 				},
 				map[string]string{},
 				nil
@@ -257,19 +255,12 @@ func getTrustRequirementSettings(plan TrustRequirementState) (trustRequirementTy
 
 		return enclaveTrustRequirement.UserAuthentication,
 			map[string]string{
-				"authority": plan.UserAuthentication.Authority.Value,
+				"authority": authorityLower,
 				"tenantId":  plan.UserAuthentication.TenantId.Value,
 			}, map[string]string{
 				"claim": "groups",
 				"value": plan.UserAuthentication.GroupId.Value,
 			},
-			nil
-	}
-
-	if plan.PublicIp != (PublicIpState{}) {
-		return enclaveTrustRequirement.PublicIp,
-			map[string]string{},
-			map[string]string{},
 			nil
 	}
 
