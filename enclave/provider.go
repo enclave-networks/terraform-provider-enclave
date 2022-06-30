@@ -147,6 +147,7 @@ func (p *provider) GetResources(_ context.Context) (map[string]tfsdk.ResourceTyp
 		"enclave_dns_zone":          dnsZoneResourceType{},
 		"enclave_dns_record":        dnsRecordResourceType{},
 		"enclave_trust_requirement": trustRequirementResourceType{},
+		"enclave_tag":               tagResourceType{},
 		// Add more resource types here
 	}, nil
 }

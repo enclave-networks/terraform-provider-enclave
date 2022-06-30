@@ -1,6 +1,9 @@
 package enclave
 
-import "github.com/hashicorp/terraform-plugin-framework/types"
+import (
+	enclaveTrustRequirement "github.com/enclave-networks/go-enclaveapi/data/trustrequirement"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+)
 
 type EnrolmentKeyState struct {
 	Id           types.Int64  `tfsdk:"id"`
@@ -12,13 +15,14 @@ type EnrolmentKeyState struct {
 }
 
 type PolicyState struct {
-	Id           types.Int64      `tfsdk:"id"`
-	Description  types.String     `tfsdk:"description"`
-	Notes        types.String     `tfsdk:"notes"`
-	IsEnabled    types.Bool       `tfsdk:"is_enabled"`
-	SenderTags   []string         `tfsdk:"sender_tags"`
-	ReceiverTags []string         `tfsdk:"receiver_tags"`
-	Acl          []PolicyAclState `tfsdk:"acl"`
+	Id                types.Int64      `tfsdk:"id"`
+	Description       types.String     `tfsdk:"description"`
+	Notes             types.String     `tfsdk:"notes"`
+	IsEnabled         types.Bool       `tfsdk:"is_enabled"`
+	SenderTags        []string         `tfsdk:"sender_tags"`
+	ReceiverTags      []string         `tfsdk:"receiver_tags"`
+	Acl               []PolicyAclState `tfsdk:"acl"`
+	TrustRequirements []enclaveTrustRequirement.TrustRequirementId
 }
 
 type PolicyAclState struct {
@@ -53,4 +57,12 @@ type UserAuthenticationState struct {
 	Authority types.String `tfsdk:"authority"`
 	TenantId  types.String `tfsdk:"tenant_id"`
 	GroupId   types.String `tfsdk:"group_id"`
+}
+
+type TagState struct {
+	Ref               types.String                                 `tfsdk:"ref"`
+	Name              types.String                                 `tfsdk:"name"`
+	Colour            types.String                                 `tfsdk:"colour"`
+	Notes             types.String                                 `tfsdk:"notes"`
+	TrustRequirements []enclaveTrustRequirement.TrustRequirementId `tfsdk:"trust_requirements"`
 }

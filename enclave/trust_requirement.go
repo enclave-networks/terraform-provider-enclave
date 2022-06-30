@@ -159,7 +159,7 @@ func (t trustRequirement) Read(ctx context.Context, req tfsdk.ReadResourceReques
 	currentTrustRequirement, err := t.provider.client.TrustRequirements.Get(trustRequirementId)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Error reading policy Key",
+			"Error reading Trust requirement Id",
 			"Could not read Id "+fmt.Sprint(trustRequirementId)+": "+err.Error(),
 		)
 		return

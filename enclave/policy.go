@@ -47,6 +47,12 @@ func (p policyResourceType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Dia
 				},
 				Optional: true,
 			},
+			"trust_requirements": {
+				Type: types.ListType{
+					ElemType: types.Int64Type,
+				},
+				Optional: true,
+			},
 			"acl": {
 				Type: types.ListType{
 					ElemType: types.ObjectType{
@@ -105,12 +111,13 @@ func (p policy) Create(ctx context.Context, req tfsdk.CreateResourceRequest, res
 	}
 
 	policyCreate := enclavePolicy.PolicyCreate{
-		Description:  plan.Description.Value,
-		IsEnabled:    isEnabled,
-		Notes:        plan.Notes.Value,
-		SenderTags:   plan.SenderTags,
-		ReceiverTags: plan.ReceiverTags,
-		Acls:         policyAcl,
+		Description:       plan.Description.Value,
+		IsEnabled:         isEnabled,
+		Notes:             plan.Notes.Value,
+		SenderTags:        plan.SenderTags,
+		ReceiverTags:      plan.ReceiverTags,
+		Acls:              policyAcl,
+		TrustRequirements: plan.TrustRequirements,
 	}
 
 	// create request
@@ -145,7 +152,7 @@ func (p policy) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp *t
 	currentPolicy, err := p.provider.client.Policies.Get(policyId)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Error reading policy Key",
+			"Error reading policy Id",
 			"Could not read Id "+fmt.Sprint(policyId)+": "+err.Error(),
 		)
 		return
@@ -184,12 +191,13 @@ func (p policy) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, res
 	policyId := enclavePolicy.PolicyId(state.Id.Value)
 
 	updatePolicy, err := p.provider.client.Policies.Update(policyId, enclavePolicy.PolicyPatch{
-		Description:  plan.Description.Value,
-		IsEnabled:    plan.IsEnabled.Value,
-		SenderTags:   plan.SenderTags,
-		ReceiverTags: plan.ReceiverTags,
-		Notes:        plan.Notes.Value,
-		Acls:         policyAcl,
+		Description:       plan.Description.Value,
+		IsEnabled:         plan.IsEnabled.Value,
+		SenderTags:        plan.SenderTags,
+		ReceiverTags:      plan.ReceiverTags,
+		Notes:             plan.Notes.Value,
+		Acls:              policyAcl,
+		TrustRequirements: plan.TrustRequirements,
 	})
 
 	if err != nil {
