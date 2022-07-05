@@ -16,3 +16,4 @@ vendor/
 
 # terraform ignore
 *.tfstate*
+examples/test

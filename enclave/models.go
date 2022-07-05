@@ -1,7 +1,6 @@
 package enclave
 
 import (
-	enclaveTrustRequirement "github.com/enclave-networks/go-enclaveapi/data/trustrequirement"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -22,7 +21,7 @@ type PolicyState struct {
 	SenderTags        []string         `tfsdk:"sender_tags"`
 	ReceiverTags      []string         `tfsdk:"receiver_tags"`
 	Acl               []PolicyAclState `tfsdk:"acl"`
-	TrustRequirements []enclaveTrustRequirement.TrustRequirementId
+	TrustRequirements []types.Int64    `tfsdk:"trust_requirements"`
 }
 
 type PolicyAclState struct {
@@ -60,9 +59,9 @@ type UserAuthenticationState struct {
 }
 
 type TagState struct {
-	Ref               types.String                                 `tfsdk:"ref"`
-	Name              types.String                                 `tfsdk:"name"`
-	Colour            types.String                                 `tfsdk:"colour"`
-	Notes             types.String                                 `tfsdk:"notes"`
-	TrustRequirements []enclaveTrustRequirement.TrustRequirementId `tfsdk:"trust_requirements"`
+	Ref               types.String  `tfsdk:"ref"`
+	Name              types.String  `tfsdk:"name"`
+	Colour            types.String  `tfsdk:"colour"`
+	Notes             types.String  `tfsdk:"notes"`
+	TrustRequirements []types.Int64 `tfsdk:"trust_requirements"`
 }
