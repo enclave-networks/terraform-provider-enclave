@@ -3,9 +3,11 @@ package enclave
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"strings"
 
 	enclaveTrustRequirement "github.com/enclave-networks/go-enclaveapi/data/trustrequirement"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -34,17 +36,31 @@ func (t trustRequirementResourceType) GetSchema(_ context.Context) (tfsdk.Schema
 						Type:     types.StringType,
 						Required: true,
 					},
-					"tenant_id": {
+					"azure_tenant_id": {
 						Type:     types.StringType,
 						Optional: true,
 					},
-					"group_id": {
+					"azure_group_id": {
 						Type:     types.StringType,
+						Optional: true,
+					},
+					"mfa": {
+						Type:     types.BoolType,
+						Optional: true,
+					},
+					"custom_claims": {
+						Type: types.ListType{
+							ElemType: types.ObjectType{
+								AttrTypes: map[string]attr.Type{
+									"claim": types.StringType,
+									"value": types.StringType,
+								},
+							},
+						},
 						Optional: true,
 					},
 				}),
-				Optional:  true,
-				Sensitive: true,
+				Optional: true,
 			},
 		},
 	}, nil
@@ -232,16 +248,16 @@ func setTrustRequirementStateId(trustRequirement enclaveTrustRequirement.TrustRe
 }
 
 func validateTrustRequirement(plan TrustRequirementState, diagnostics *diag.Diagnostics) {
-	if strings.ToLower(plan.UserAuthentication.Authority.Value) == string(Portal) && (!plan.UserAuthentication.GroupId.Null || !plan.UserAuthentication.TenantId.Null) {
+	if strings.ToLower(plan.UserAuthentication.Authority.Value) == string(Portal) && (!plan.UserAuthentication.AzureGroupId.Null || !plan.UserAuthentication.AzureTenantId.Null) {
 		diagnostics.AddWarning(
 			"Authetication Authority of Portal does not need any additional properties",
 			"The portal Authority type only needs the Authority value")
 	}
 }
 
-func getTrustRequirementSettings(plan TrustRequirementState) (trustRequirementType enclaveTrustRequirement.TrustRequirementType, config map[string]string, conditions map[string]string, err error) {
+func getTrustRequirementSettings(plan TrustRequirementState) (trustRequirementType enclaveTrustRequirement.TrustRequirementType, config map[string]string, conditions []map[string]string, err error) {
 	// UserAuthentication has been set use that to create our maps
-	if plan.UserAuthentication != (UserAuthenticationState{}) {
+	if !reflect.DeepEqual(plan.UserAuthentication, UserAuthenticationState{}) {
 		authorityLower := strings.ToLower(plan.UserAuthentication.Authority.Value)
 
 		if authorityLower == string(Portal) {
@@ -249,25 +265,51 @@ func getTrustRequirementSettings(plan TrustRequirementState) (trustRequirementTy
 				map[string]string{
 					"authority": authorityLower,
 				},
-				map[string]string{},
+				[]map[string]string{},
 				nil
 		}
 
-		return enclaveTrustRequirement.UserAuthentication,
-			map[string]string{
-				"authority": authorityLower,
-				"tenantId":  plan.UserAuthentication.TenantId.Value,
-			}, map[string]string{
-				"claim": "groups",
-				"value": plan.UserAuthentication.GroupId.Value,
-			},
-			nil
+		if authorityLower == string(Azure) {
+			conditions := []map[string]string{
+				{
+					"claim": "groups",
+					"value": plan.UserAuthentication.AzureGroupId.Value,
+				},
+			}
+
+			// only add mfa claim if set and true
+			if !plan.UserAuthentication.Mfa.Null && plan.UserAuthentication.Mfa.Value {
+				conditions = append(conditions, map[string]string{
+					"claim": "amr",
+					"value": "mfa",
+				})
+			}
+
+			if len(plan.UserAuthentication.CustomClaims) > 0 {
+				customClaims := make([]map[string]string, len(plan.UserAuthentication.CustomClaims))
+				for i, item := range plan.UserAuthentication.CustomClaims {
+					customClaims[i] = map[string]string{
+						"claim": item.Claim.Value,
+						"value": item.Value.Value,
+					}
+				}
+
+				conditions = append(conditions, customClaims...)
+			}
+
+			return enclaveTrustRequirement.UserAuthentication,
+				map[string]string{
+					"authority": authorityLower,
+					"tenantId":  plan.UserAuthentication.AzureTenantId.Value,
+				}, conditions, nil
+		}
+
 	}
 
 	// We shouldn't ever really get here but just in case we'll inform the user they've not got a value
 	return -1,
 		map[string]string{},
-		map[string]string{},
+		[]map[string]string{},
 		fmt.Errorf("could not get trust requirement settings please ensure you have a type object created refer to the docs for more information")
 }
 

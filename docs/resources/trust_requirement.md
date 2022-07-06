@@ -12,28 +12,39 @@ A Trust Requirement can be created and attached to either a Policy or Tag this d
 ## Example
 
 ```terraform
-resource "enclave_dns_zone" "zone1" {
-  name = "internal"
-}
-
-resource "enclave_dns_record" "record1"{
-  name = "terraform-test"
-  zone_id = enclave_dns_zone.zone1.id
-  tags = [
-      "tag1",
-      "tag2-dns"
-  ]
+resource "enclave_trust_requirement" "my_first_trust" {
+  description = "Azure Access"
+  user_authentication = {
+    authority = "Azure" 
+    azure_tenant_id = "<tenant-id>"
+    azure_group_id = "<group-id>"
+    mfa = true
+    custom_claims = [
+      {
+        claim = "<claim-name>"
+        value = "<value>"
+      }
+    ]
+  }
 }
 ```
 
 ## Schema
 
-- `zone_id` - (Optional) A DNS Zone ID which can be retrieved from the resource.
+- `description` - (Required) A description of the Trust Requirement.
 
-- `name` - (Required) The DNS Record name which also forms the `FQDN`.
+- `user_authentication` - (Optional) An object used to define a User Authentication Trust Requirement.
 
-- `tags` - (Optional) The list of Tags that this Record will apply to.
+  - `authority` - (Required) The type of authority currently only `Portal` and `Azure` are supported.
 
-- `systems` - (Optional) A list of system IDs this Record will apply to.
+  - `azure_tenant_id` - (Required if Azure Authority Specified) The azure tenant ID.
 
-- `notes` - (Optional) Notes about this DNS Record.
+  - `azure_group_id` - (Optional) An Azure Group ID.
+
+  - `mfa` - (Optional) Require Multi Factor Authentication.
+
+  - `custom_claims` (Optional) A list of custom claims.
+    
+    - `claim` (Required) The Name of the custom claim.
+
+    - `value` (Required) The Value of the custom claim.

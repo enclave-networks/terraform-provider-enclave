@@ -53,9 +53,16 @@ type TrustRequirementState struct {
 }
 
 type UserAuthenticationState struct {
-	Authority types.String `tfsdk:"authority"`
-	TenantId  types.String `tfsdk:"tenant_id"`
-	GroupId   types.String `tfsdk:"group_id"`
+	Authority     types.String                        `tfsdk:"authority"`
+	AzureTenantId types.String                        `tfsdk:"azure_tenant_id"`
+	AzureGroupId  types.String                        `tfsdk:"azure_group_id"`
+	Mfa           types.Bool                          `tfsdk:"mfa"`
+	CustomClaims  []TrustRequirementCustomClaimsState `tfsdk:"custom_claims"`
+}
+
+type TrustRequirementCustomClaimsState struct {
+	Claim types.String `tfsdk:"claim"`
+	Value types.String `tfsdk:"value"`
 }
 
 type TagState struct {
