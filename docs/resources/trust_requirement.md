@@ -37,7 +37,7 @@ resource "enclave_trust_requirement" "my_first_trust" {
 
   - `authority` - (Required) The type of authority currently only `Portal` and `Azure` are supported.
 
-  - `azure_tenant_id` - (Required if Azure Authority Specified) The azure tenant ID.
+  - `azure_tenant_id` - (Optional) The azure tenant ID.
 
   - `azure_group_id` - (Optional) An Azure Group ID.
 
