@@ -5,12 +5,13 @@ import (
 )
 
 type EnrolmentKeyState struct {
-	Id           types.Int64  `tfsdk:"id"`
-	Key          types.String `tfsdk:"key"`
-	Type         types.String `tfsdk:"type"`
-	ApprovalMode types.String `tfsdk:"approval_mode"`
-	Description  types.String `tfsdk:"description"`
-	Tags         []string     `tfsdk:"tags"`
+	Id                           types.Int64  `tfsdk:"id"`
+	Key                          types.String `tfsdk:"key"`
+	Type                         types.String `tfsdk:"type"`
+	ApprovalMode                 types.String `tfsdk:"approval_mode"`
+	Description                  types.String `tfsdk:"description"`
+	DisconnectedRetentionMinutes types.Int64  `tfsdk:"disconnected_retention_minutes"`
+	Tags                         []string     `tfsdk:"tags"`
 }
 
 type PolicyState struct {
@@ -43,6 +44,7 @@ type DnsRecordState struct {
 	Tags    []string     `tfsdk:"tags"`
 	Systems []string     `tfsdk:"systems"`
 	Notes   types.String `tfsdk:"notes"`
+	Fqdn    types.String `tfsdk:"fqdn"`
 }
 
 type TrustRequirementState struct {

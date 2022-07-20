@@ -15,8 +15,8 @@ github.com/cncf/xds/go v0.0.0-20211011173535-cb28da3451f1/go.mod h1:eXthEFrGJvWH
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/enclave-networks/go-enclaveapi v0.0.0-20220706144949-828ef7f9cf8e h1:HGsUgotsV9zj2QRrqL0Aqao8iyEztXxbXtj9IkyD56M=
-github.com/enclave-networks/go-enclaveapi v0.0.0-20220706144949-828ef7f9cf8e/go.mod h1:idehRfRkNwm0hGozo9S1NDBKNIzf5XSfixpSh129vvc=
+github.com/enclave-networks/go-enclaveapi v0.0.0-20220720101703-a324053d20b2 h1:2GF3/BqczJe6syGjRsbEltnQcO/VK31zpFdCQ8LjTH4=
+github.com/enclave-networks/go-enclaveapi v0.0.0-20220720101703-a324053d20b2/go.mod h1:idehRfRkNwm0hGozo9S1NDBKNIzf5XSfixpSh129vvc=
 github.com/envoyproxy/go-control-plane v0.9.0/go.mod h1:YTl/9mNaCwkRvm6d1a2C3ymFceY/DCBVvsKhRF0iEA4=
 github.com/envoyproxy/go-control-plane v0.9.1-0.20191026205805-5f8ba28d4473/go.mod h1:YTl/9mNaCwkRvm6d1a2C3ymFceY/DCBVvsKhRF0iEA4=
 github.com/envoyproxy/go-control-plane v0.9.4/go.mod h1:6rpuAdCZL397s3pYoYcLgu1mIlRU8Am5FuJP05cCM98=

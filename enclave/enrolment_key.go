@@ -43,6 +43,10 @@ func (e enrolmentKeyResourceType) GetSchema(_ context.Context) (tfsdk.Schema, di
 				Type:     types.StringType,
 				Required: true,
 			},
+			"disconnected_retention_minutes": {
+				Type:     types.Int64Type,
+				Optional: true,
+			},
 			"tags": {
 				Type: types.ListType{
 					ElemType: types.StringType,
