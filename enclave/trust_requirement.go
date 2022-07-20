@@ -307,7 +307,7 @@ func getTrustRequirementSettings(plan TrustRequirementState) (trustRequirementTy
 	}
 
 	// We shouldn't ever really get here but just in case we'll inform the user they've not got a value
-	return -1,
+	return "",
 		map[string]string{},
 		[]map[string]string{},
 		fmt.Errorf("could not get trust requirement settings please ensure you have a type object created refer to the docs for more information")
