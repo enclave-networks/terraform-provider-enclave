@@ -306,5 +306,5 @@ func isValidProtocol(protocol string) (enclavePolicy.PolicyAclProtocol, error) {
 		return enclavePolicy.Icmp, nil
 	}
 
-	return -1, fmt.Errorf("invalid protcol specified must be one of: any, tcp, udp, icmp")
+	return "", fmt.Errorf("invalid protcol specified must be one of: any, tcp, udp, icmp")
 }
