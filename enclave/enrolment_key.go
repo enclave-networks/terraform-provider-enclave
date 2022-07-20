@@ -13,10 +13,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 )
 
-// Can probably use a data source for ACLs however need to understand that more https://www.terraform.io/plugin/framework/data-sources
-// https://learn.hashicorp.com/tutorials/terraform/plugin-framework-create?in=terraform/providers
-//https://www.terraform.io/plugin/framework/resources
-
 type enrolmentKeyResourceType struct{}
 
 func (e enrolmentKeyResourceType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
@@ -124,10 +120,11 @@ func (e enrolmentKey) Create(ctx context.Context, req tfsdk.CreateResourceReques
 	}
 
 	enrolmentKeyCreate := enclaveEnrolmentKey.EnrolmentKeyCreate{
-		Type:         enrolmentKeyType,
-		ApprovalMode: approvalModeType,
-		Description:  plan.Description.Value,
-		Tags:         plan.Tags,
+		Type:                         enrolmentKeyType,
+		ApprovalMode:                 approvalModeType,
+		Description:                  plan.Description.Value,
+		Tags:                         plan.Tags,
+		DisconnectedRetentionMinutes: int(plan.DisconnectedRetentionMinutes.Value),
 	}
 
 	// create request
@@ -217,9 +214,10 @@ func (e enrolmentKey) Update(ctx context.Context, req tfsdk.UpdateResourceReques
 
 	// call api to update
 	updateEnrolmentKey, err := e.provider.client.EnrolmentKeys.Update(enrolmentKeyId, enclaveEnrolmentKey.EnrolmentKeyPatch{
-		Description:  plan.Description.Value,
-		ApprovalMode: approvalModeType,
-		Tags:         plan.Tags,
+		Description:                  plan.Description.Value,
+		ApprovalMode:                 approvalModeType,
+		Tags:                         plan.Tags,
+		DisconnectedRetentionMinutes: int(plan.DisconnectedRetentionMinutes.Value),
 	})
 
 	if err != nil {
