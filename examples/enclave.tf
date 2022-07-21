@@ -14,7 +14,7 @@ terraform {
 
 variable "enclave_token" {
   type      = string
-  nullable  = false,
+  nullable  = false
   sensitive = true
 }
 
@@ -43,6 +43,29 @@ resource "enclave_enrolment_key" "db_enrolment" {
   tags = [
     "database"
   ]
+}
+
+resource "enclave_tag" "tag_1" {
+  name = "this-is-a-tag"
+  trust_requirements = [
+    enclave_trust_requirement.my_first_trust.id
+  ]
+}
+
+resource "enclave_trust_requirement" "my_first_trust" {
+  description = "Azure Access"
+  user_authentication = {
+    authority = "Azure" 
+    azure_tenant_id = "<tenant-id>"
+    azure_group_id = "<group-id>"
+    mfa = true
+    custom_claims = [
+      {
+        claim = "<claim-name>"
+        value = "<value>"
+      }
+    ]
+  }
 }
 
 # This is a sensitive value; it's only being output here as an example please be wary with sharing this key

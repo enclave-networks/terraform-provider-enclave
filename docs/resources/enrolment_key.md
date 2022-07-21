@@ -37,6 +37,8 @@ output "key_value" {
 
 - `tags` - (Optional) An array of tags that will automatically be applied to any system enrolled with this key.
 
+- `disconnected_retention_minutes` - (Optional) Defines the number of minutes an ephemeral system enrolled with this key will be retained after a non-graceful disconnect. Only used when the type is 'ephemeral'.
+
 ## Attributes
 
 The following additional attributes are available for all keys:
