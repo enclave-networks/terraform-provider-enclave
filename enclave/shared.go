@@ -5,7 +5,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-func toTrustRequirementSlice(ids []types.Int64) []enclaveTrustRequirement.TrustRequirementId {
+func toTrustRequirementIdArray(ids []types.Int64) []enclaveTrustRequirement.TrustRequirementId {
 	output := make([]enclaveTrustRequirement.TrustRequirementId, len(ids))
 	for i, id := range ids {
 		output[i] = enclaveTrustRequirement.TrustRequirementId(id.Value)

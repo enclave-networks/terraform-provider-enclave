@@ -73,7 +73,7 @@ func (t tag) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *
 		Tag:               plan.Name.Value,
 		Colour:            plan.Colour.Value,
 		Notes:             plan.Notes.Value,
-		TrustRequirements: toTrustRequirementSlice(plan.TrustRequirements),
+		TrustRequirements: toTrustRequirementIdArray(plan.TrustRequirements),
 	}
 
 	// create request
@@ -138,7 +138,7 @@ func (t tag) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, resp *
 		Tag:               plan.Name.Value,
 		Colour:            plan.Colour.Value,
 		Notes:             plan.Notes.Value,
-		TrustRequirements: toTrustRequirementSlice(plan.TrustRequirements),
+		TrustRequirements: toTrustRequirementIdArray(plan.TrustRequirements),
 	})
 
 	if err != nil {

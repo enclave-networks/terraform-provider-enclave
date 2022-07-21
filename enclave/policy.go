@@ -117,7 +117,7 @@ func (p policy) Create(ctx context.Context, req tfsdk.CreateResourceRequest, res
 		SenderTags:        plan.SenderTags,
 		ReceiverTags:      plan.ReceiverTags,
 		Acls:              policyAcl,
-		TrustRequirements: toTrustRequirementSlice(plan.TrustRequirements),
+		TrustRequirements: toTrustRequirementIdArray(plan.TrustRequirements),
 	}
 
 	// create request
@@ -197,7 +197,7 @@ func (p policy) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, res
 		ReceiverTags:      plan.ReceiverTags,
 		Notes:             plan.Notes.Value,
 		Acls:              policyAcl,
-		TrustRequirements: toTrustRequirementSlice(plan.TrustRequirements),
+		TrustRequirements: toTrustRequirementIdArray(plan.TrustRequirements),
 	})
 
 	if err != nil {
