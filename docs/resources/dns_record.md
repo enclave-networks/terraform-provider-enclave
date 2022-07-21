@@ -39,3 +39,9 @@ resource "enclave_dns_record" "record1"{
 - `systems` - (Optional) A list of system IDs this Record will apply to.
 
 - `notes` - (Optional) Notes about this DNS Record.
+
+## Attributes
+
+The following additional attributes are available for all DNS Records:
+
+- `fqdn` - The fully-qualified domain name of the record, including the zone name.
