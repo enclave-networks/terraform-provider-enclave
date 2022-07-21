@@ -45,6 +45,10 @@ func (d dnsRecordResourceType) GetSchema(_ context.Context) (tfsdk.Schema, diag.
 				Type:     types.StringType,
 				Optional: true,
 			},
+			"fqdn": {
+				Type:     types.StringType,
+				Computed: true,
+			},
 		},
 	}, nil
 }
@@ -104,7 +108,7 @@ func (d dnsRecord) Create(ctx context.Context, req tfsdk.CreateResourceRequest, 
 		return
 	}
 
-	setDnsRecordStateId(dnsRecord, &plan)
+	setDnsRecordState(dnsRecord, &plan)
 
 	diags = resp.State.Set(ctx, plan)
 	resp.Diagnostics.Append(diags...)
@@ -159,7 +163,7 @@ func (d dnsRecord) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp
 		return
 	}
 
-	setDnsRecordStateId(dnsRecord, &state)
+	setDnsRecordState(dnsRecord, &state)
 
 	diags = resp.State.Set(ctx, state)
 	resp.Diagnostics.Append(diags...)
@@ -201,7 +205,7 @@ func (d dnsRecord) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, 
 	}
 
 	// update state
-	setDnsRecordStateId(updateDnsRecord, &plan)
+	setDnsRecordState(updateDnsRecord, &plan)
 	diags = resp.State.Set(ctx, plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -215,6 +219,7 @@ func (dnsRecord) ImportState(ctx context.Context, req tfsdk.ImportResourceStateR
 
 }
 
-func setDnsRecordStateId(dnsRecord enclaveDns.DnsRecord, state *DnsRecordState) {
+func setDnsRecordState(dnsRecord enclaveDns.DnsRecord, state *DnsRecordState) {
 	state.Id = types.Int64{Value: int64(dnsRecord.Id)}
+	state.Fqdn = types.String{Value: dnsRecord.Fqdn}
 }

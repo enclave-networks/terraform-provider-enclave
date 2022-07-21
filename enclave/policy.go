@@ -47,6 +47,12 @@ func (p policyResourceType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Dia
 				},
 				Optional: true,
 			},
+			"trust_requirements": {
+				Type: types.ListType{
+					ElemType: types.Int64Type,
+				},
+				Optional: true,
+			},
 			"acl": {
 				Type: types.ListType{
 					ElemType: types.ObjectType{
@@ -105,16 +111,17 @@ func (p policy) Create(ctx context.Context, req tfsdk.CreateResourceRequest, res
 	}
 
 	policyCreate := enclavePolicy.PolicyCreate{
-		Description:  plan.Description.Value,
-		IsEnabled:    isEnabled,
-		Notes:        plan.Notes.Value,
-		SenderTags:   plan.SenderTags,
-		ReceiverTags: plan.ReceiverTags,
-		Acls:         policyAcl,
+		Description:       plan.Description.Value,
+		IsEnabled:         isEnabled,
+		Notes:             plan.Notes.Value,
+		SenderTags:        plan.SenderTags,
+		ReceiverTags:      plan.ReceiverTags,
+		Acls:              policyAcl,
+		TrustRequirements: toTrustRequirementIdArray(plan.TrustRequirements),
 	}
 
 	// create request
-	policyResponse, err := p.provider.client.Policy.Create(policyCreate)
+	policyResponse, err := p.provider.client.Policies.Create(policyCreate)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error creating Policy in enclave",
@@ -142,10 +149,10 @@ func (p policy) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp *t
 
 	policyId := enclavePolicy.PolicyId(state.Id.Value)
 
-	currentPolicy, err := p.provider.client.Policy.Get(policyId)
+	currentPolicy, err := p.provider.client.Policies.Get(policyId)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Error reading policy Key",
+			"Error reading policy Id",
 			"Could not read Id "+fmt.Sprint(policyId)+": "+err.Error(),
 		)
 		return
@@ -183,13 +190,14 @@ func (p policy) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, res
 
 	policyId := enclavePolicy.PolicyId(state.Id.Value)
 
-	updatePolicy, err := p.provider.client.Policy.Update(policyId, enclavePolicy.PolicyPatch{
-		Description:  plan.Description.Value,
-		IsEnabled:    plan.IsEnabled.Value,
-		SenderTags:   plan.SenderTags,
-		ReceiverTags: plan.ReceiverTags,
-		Notes:        plan.Notes.Value,
-		Acls:         policyAcl,
+	updatePolicy, err := p.provider.client.Policies.Update(policyId, enclavePolicy.PolicyPatch{
+		Description:       plan.Description.Value,
+		IsEnabled:         plan.IsEnabled.Value,
+		SenderTags:        plan.SenderTags,
+		ReceiverTags:      plan.ReceiverTags,
+		Notes:             plan.Notes.Value,
+		Acls:              policyAcl,
+		TrustRequirements: toTrustRequirementIdArray(plan.TrustRequirements),
 	})
 
 	if err != nil {
@@ -221,7 +229,7 @@ func (p policy) Delete(ctx context.Context, req tfsdk.DeleteResourceRequest, res
 	policyId := enclavePolicy.PolicyId(state.Id.Value)
 
 	//call api to delete
-	_, err := p.provider.client.Policy.Delete(policyId)
+	_, err := p.provider.client.Policies.Delete(policyId)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error deleting Policy",
@@ -298,5 +306,5 @@ func isValidProtocol(protocol string) (enclavePolicy.PolicyAclProtocol, error) {
 		return enclavePolicy.Icmp, nil
 	}
 
-	return -1, fmt.Errorf("invalid protcol specified must be one of: any, tcp, udp, icmp")
+	return "", fmt.Errorf("invalid protcol specified must be one of: any, tcp, udp, icmp")
 }

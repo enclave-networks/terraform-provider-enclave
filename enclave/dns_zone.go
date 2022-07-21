@@ -184,7 +184,6 @@ func (d dnsZone) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, re
 // ImportState implements tfsdk.Resource
 func (dnsZone) ImportState(ctx context.Context, req tfsdk.ImportResourceStateRequest, resp *tfsdk.ImportResourceStateResponse) {
 	tfsdk.ResourceImportStatePassthroughID(ctx, tftypes.NewAttributePath().WithAttributeName("id"), req, resp)
-
 }
 
 func setDnsZoneStateId(dnsZone enclaveDns.DnsZone, state *DnsZoneState) {
